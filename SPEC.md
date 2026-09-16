@@ -686,9 +686,9 @@ implement those Issues. Normally one implementation Issue maps to one PR.
 Issues link relevant specification sections without duplicating them.
 
 ADRs under `docs/adr/` document only significant architectural decisions.
-Detailed reusable agent procedures live in
-[implement-github-issue](.codex/skills/implement-github-issue/SKILL.md) and
-[harden-repository](.codex/skills/harden-repository/SKILL.md).
+Detailed reusable agent procedures are routed from [AGENTS.md](AGENTS.md#skills):
+work-item refinement, implementation, PR preparation, significant architecture
+review and repository hardening.
 [SECURITY.md](SECURITY.md) defines vulnerability reporting.
 
 ---

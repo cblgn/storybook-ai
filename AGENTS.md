@@ -1,191 +1,216 @@
-# Storybook AI — Agent instructions
+# Storybook AI — Agent Instructions
 
-## Project
+## Purpose
 
-Storybook AI generates personalized children's stories with an LLM. It is both a
-usable web application and an experiment in agent-assisted development.
+Storybook AI is a local-first web application that generates personalized children's stories using an LLM.
 
-Keep the project small enough to understand and complete as a one-day MVP.
-Prefer simple, complete changes over speculative abstractions or infrastructure.
-Everything must work locally; cloud services and paid infrastructure are not
-required for the application. Keep backend and frontend in this one repository.
+The project is also used to practice high-quality agentic software development with Codex.
 
-Use [README.md](README.md) for setup and [SPEC.md](SPEC.md) for product scope.
-Do not expand that scope merely because a framework or service is available.
+Prefer simple, explicit, production-quality solutions over speculative architecture.
+Keep the one-day MVP proportionate, backend and frontend in one repository, and
+the application runnable locally without unnecessary cloud infrastructure.
 
 ## Sources of truth
 
-Use these sources in order:
+Use these sources in this order:
 
-1. The current authorized user request.
-2. The relevant GitHub Issue, when one exists.
-3. [SPEC.md](SPEC.md).
-4. This `AGENTS.md`.
-5. [CONTRIBUTING.md](CONTRIBUTING.md).
-6. Existing code and tests.
+1. the current authorized user request;
+2. the relevant GitHub Issue, when one exists;
+3. `SPEC.md` for expected product behavior;
+4. `AGENTS.md` for permanent agent rules;
+5. `CONTRIBUTING.md` for the human Git/GitHub workflow;
+6. existing code and tests.
 
-Each source has a distinct responsibility:
+A PR is the implementation and review of an Issue. [ADRs](docs/adr/README.md)
+record significant architectural rationale; [SECURITY.md](SECURITY.md) owns
+private vulnerability reporting. Use [README.md](README.md) for local setup.
+Do not create local Markdown task files.
 
-- A GitHub Issue is the authoritative description of the current work item.
-- `SPEC.md` defines expected product behavior and functional requirements.
-- `AGENTS.md` defines permanent coding-agent rules and architectural invariants.
-- `CONTRIBUTING.md` describes the human contribution workflow and local commands.
-- A Pull Request contains the implementation and its review.
-- [ADRs](docs/adr/README.md) record significant architectural rationale only.
-- [SECURITY.md](SECURITY.md) defines private vulnerability reporting.
+If an Issue conflicts with `SPEC.md`, identify the conflict before implementation. Update `SPEC.md` only when an authorized change modifies expected product behavior.
 
-Identify conflicts with the specification before implementation. An authorized
-product change must explicitly update the specification; do not silently treat
-an Issue or an existing implementation as a replacement specification.
+## Instruction precedence
 
-Use GitHub Issues for work tracking; do not create Markdown task files.
+Explicit user instructions take precedence over workflow guidance in skills.
 
-## Technology stack
+Skills provide the default repository workflow, but they must not override
+an explicit authorized user request.
 
-- Backend: Python 3.14+, uv, FastAPI, Pydantic v2 and PydanticAI.
-- Backend quality: pytest, pytest-cov, Ruff and mypy.
-- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui and pnpm.
-- Frontend quality: ESLint, TypeScript, Vitest/Testing Library and Playwright.
+If a skill conflicts with another repository instruction, follow the
+source-of-truth order defined above and report the conflict.
 
-Read the manifests and lockfiles for exact versions. Do not introduce another
-backend, frontend or agent framework without an explicit requirement.
-Use lockfiles and preserve dependency build restrictions: uv's `--no-build`
-and pnpm's explicit build-script allowlist.
+## Stack
+
+### Backend
+
+- Python 3.14+
+- uv
+- FastAPI
+- Pydantic v2
+- PydanticAI
+- pytest
+- ruff
+- mypy
+
+### Frontend
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui
+- pnpm
+
+Do not introduce another backend, frontend, or agent framework without an explicit requirement. Read manifests and lockfiles for exact versions.
 
 ## Architecture invariants
 
-Preserve this dependency direction:
+- React owns presentation and browser interaction.
+- FastAPI is the HTTP boundary.
+- Application services orchestrate use cases without depending on HTTP objects.
+- PydanticAI agents handle semantic generation, interpretation, or review.
+- Business logic must not live in FastAPI route handlers.
+- AI orchestration must not live in React components.
+- PydanticAI agents must not depend on HTTP concepts.
+- Prefer typed structured outputs over parsing free-form LLM text.
+- Prefer deterministic Python for deterministic behavior.
+- Keep dependencies explicit.
+- Prefer feature-oriented React code, native state and existing shadcn/ui primitives;
+  do not introduce Redux for the MVP.
+- Avoid speculative abstractions, unnecessary layers, and infrastructure without a current requirement.
 
-```text
-React → HTTP API → FastAPI → application services → PydanticAI agents → provider
+## AI and PydanticAI invariants
+
+- PydanticAI is the application LLM framework.
+- Agents must have focused responsibilities.
+- LLM providers must remain configurable.
+- Prefer the existing Codex-compatible PydanticAI provider for local development
+  when available.
+- Prompts must not become hidden application logic when deterministic code is more appropriate.
+- Revision/retry loops must be bounded.
+- Do not introduce LangChain, LangGraph, CrewAI, or another orchestration framework unless explicitly required.
+- Never hardcode or commit provider credentials.
+
+## Testing and quality
+
+Normal automated tests must be deterministic and must not call a real LLM.
+
+Normal CI must not require LLM credentials; preserve guards against real model
+requests. Real-provider tests remain opt-in, marked `integration`, and excluded
+from the default suite and required PR checks.
+
+Backend checks when affected, starting from the repository root:
+
+```bash
+cd backend
+uv run ruff check .
+uv run mypy src
+uv run pytest --cov=src/storybook --cov-report=term-missing
 ```
 
-React owns presentation and interaction state, not AI orchestration.
-FastAPI owns HTTP concerns, not business logic. Keep route handlers thin.
-Application services orchestrate use cases without depending on HTTP objects.
-PydanticAI agents must remain independent of FastAPI and HTTP concepts.
-Use explicit Pydantic models and typed structured outputs at AI boundaries.
+Frontend checks when affected, starting from the repository root:
 
-Prefer feature-oriented frontend organization and existing shadcn/ui primitives.
-Use native React state and a small fetch boundary; add broader state management
-only when local state is demonstrably insufficient. Do not introduce Redux for
-the MVP.
+```bash
+cd frontend
+pnpm lint
+pnpm typecheck
+pnpm test:coverage
+pnpm build
+```
 
-Keep layering proportionate to the problem. Do not add speculative repositories,
-CQRS, event buses, registries, dependency-injection frameworks, microservices,
-background queues, plugin systems or database abstractions.
-Storage and infrastructure choices must follow the scope in `SPEC.md`.
+Run end-to-end tests when the affected workflow requires them.
 
-## PydanticAI and LLM invariants
+Backend coverage must remain at least 80%. Do not add meaningless tests or invent
+an arbitrary frontend coverage threshold. Use the locked audits in
+[CONTRIBUTING.md](CONTRIBUTING.md#vérifications-locales): backend fails on all known
+vulnerabilities, frontend on high/critical findings. Preserve `uv --no-build` and
+pnpm’s explicit dependency build-script allowlist.
+For documentation-only changes, validate references, skill metadata and the full
+diff; explain inapplicable application checks. Required remote checks still apply.
 
-PydanticAI is the application's LLM framework. Do not add LangChain, LangGraph,
-CrewAI or another orchestration framework without an explicit requirement.
-
-Give each agent a focused responsibility, clear instructions and typed outputs.
-Prefer structured results over parsing arbitrary generated text. Declare
-explicit dependencies when needed; keep provider selection configurable.
-Prefer the existing Codex-compatible PydanticAI provider for local development
-when available. Never hardcode or copy credentials into the repository.
-
-Planner, Writer, Reviewer, story models and revision behavior are specified in
-`SPEC.md`; do not redefine them here or build uncontrolled agent loops.
-
-Normal tests and CI must be deterministic and must not call a real LLM or require
-Codex, OpenAI or other provider credentials. Keep the test guards prohibiting real
-model requests. Use mocks or PydanticAI test models at the appropriate boundary.
-Real-provider tests remain explicitly opt-in, marked `integration`, and excluded
-from the default suite and required PR validation.
-
-## Testing and quality invariants
-
-Run the relevant checks for the affected components. The exact local commands
-and locked dependency audits live in [CONTRIBUTING.md](CONTRIBUTING.md#vérifications-locales).
-
-- Backend: Ruff, mypy, pytest and coverage; coverage must remain at least **80%**.
-- Frontend: ESLint, TypeScript checking, Vitest coverage, production build and
-  browser integration tests when affected.
-- Dependencies: audit the locked runtime and development dependencies. The
-  backend audit fails on all known vulnerabilities; frontend high/critical
-  findings fail its audit.
-
-Tests should check behavior and useful failure boundaries: model validation,
-service orchestration, API success/errors, form behavior and story rendering.
-Avoid meaningless tests added only to improve a coverage number. Keep frontend
-testing proportionate to the MVP; do not invent an arbitrary coverage threshold.
-
-Never weaken tests, linting, typing, coverage, security checks or Quality Gates
-merely to obtain a passing build. Fix legitimate defects. If a check itself is
-incorrect, explain the evidence before proposing its correction.
-
-For documentation-only changes, validate links, skill metadata and the complete
-diff; state which application checks are not relevant. Required remote checks
-still apply to the PR.
+Do not weaken tests, type checking, linting, coverage, security checks, Sonar rules, or repository protections merely to make a change pass.
+If a check itself is incorrect, explain the evidence before changing it.
 
 ## Git and GitHub invariants
 
-Inspect `git status`, the branch and existing modifications before significant
-work. Preserve unrelated user changes; do not overwrite or revert them.
-
-Non-trivial work uses a GitHub Issue and a dedicated branch with its Issue number.
-Normally one implementation Issue maps to one PR. Write Issue titles, bodies and
-updates in English. Keep code identifiers and quoted UI text in their language.
-
-Do not develop features or push directly on `main`. Use Conventional Commits.
-Commit and publish only when the user's task authorizes those actions; respect
-any explicit limits on remote operations and reuse authorization already given.
-
-Never merge a PR without explicit user authorization. Authorized merges use
-squash after required checks and review. The existing Dependabot automation is a
-separate approved policy; it does not authorize an agent to merge other PRs.
-
-Do not force-push, rewrite published history, amend commits or manually delete
-branches without authorization. Preserve the intentional branch/ruleset
-protections; never add bypasses or remove required checks to unblock a merge.
-
-Inspect `git status` and the complete task diff, including new files, before
-committing and before finishing. Stage only relevant files. Do not claim a PR is
-merged or an Issue delivered while it is still awaiting review.
+- Inspect `git status`, the branch and existing changes before significant work.
+- Non-trivial implementation work must be represented by a GitHub Issue.
+- Include the Issue number in the branch name. Write Issue titles, bodies and
+  updates in English, preserving quoted UI text and code identifiers.
+- Commit and publish only within existing user authorization; reuse it across skills.
+- Do not develop features directly on `main`.
+- Use one Issue and one Pull Request by default for one independently deliverable change.
+- Use Conventional Commits.
+- Do not force-push, rewrite published history, amend commits or manually delete
+  branches unless explicitly authorized.
+- Do not push directly to `main`.
+- Do not merge or enable auto-merge without explicit authorization for that PR.
+  Authorized merges use squash after required checks and review; Dependabot’s
+  approved automation does not authorize an agent to merge other PRs.
+- Do not bypass required GitHub checks or branch protections.
+- Do not overwrite or revert unrelated user changes.
+- Inspect `git status` and the full diff, including new files, before committing
+  and finishing. Stage only relevant files; keep the Issue open until merge.
 
 ## Security invariants
 
-Never commit or expose secrets, API keys, tokens, local authentication files or
-real `.env` contents. Keep `.env.example` values as placeholders only.
-The actual [.gitignore](.gitignore) is authoritative for ignored files; keep
-credentials, caches, generated builds, coverage and local application data out of
-Git. Only intentional repository skill files belong under the tracked `.codex` paths.
-
-Security controls are intentional. Never disable features, weaken protection or
-suppress findings to make checks pass. Fix findings or document a justified review.
-Use `SECURITY.md` for sensitive reports; do not publish exploit details or secrets.
-
-Respect the repository's verified full-SHA Action pinning and approved-vendor
-policy. New Actions need a concrete justification and least-privilege permissions.
-Normal dependency updates should use Dependabot.
-
-The maintained security baseline is [docs/repository-security.md](docs/repository-security.md).
-A successful configuration write is not proof of effective protection. Missing
-or unreadable protection state must fail closed.
+- Never commit secrets, tokens, local authentication files, or populated `.env` files.
+- Never expose secret values in logs, Issues, PRs, or prompts.
+- Fix legitimate security findings rather than suppressing them without justification.
+- Respect the repository's GitHub Actions pinning and least-privilege policy.
+- Dependabot is the preferred mechanism for routine dependency updates.
+- Keep `.env.example` placeholder-only; [.gitignore](.gitignore) owns exclusion
+  rules. Only intended skill files belong in tracked `.codex` paths.
+- New Actions require justification and verified full-SHA pins from approved vendors.
+- The [security baseline](docs/repository-security.md) is intentional. Never
+  disable controls or add protection bypasses; unreadable protection fails closed.
+- Report sensitive findings privately through `SECURITY.md`.
 
 ## Skills
 
-For non-trivial feature, bug-fix, refactoring, significant documentation, normal
-CI/CD or implementation work, read and use
-[implement-github-issue](.codex/skills/implement-github-issue/SKILL.md).
+Use [refine-work-item](.codex/skills/refine-work-item/SKILL.md) when a non-trivial informal request is not yet represented by a suitable GitHub Issue.
 
-For repository security, GitHub configuration, Sonar, Actions security, rulesets
-or repository hardening work, also read and use
-[harden-repository](.codex/skills/harden-repository/SKILL.md).
-Do not load the hardening procedure for every normal feature.
+Use [implement-issue](.codex/skills/implement-issue/SKILL.md) to implement an existing GitHub Issue.
 
-These are repository-local skill entrypoints. Follow their links when the task
-matches; load detailed procedures only when relevant. Skills do not grant extra
-permissions or override the current authorized request.
+Use [prepare-pull-request](.codex/skills/prepare-pull-request/SKILL.md) after implementation to publish and validate the change as a Pull Request.
+
+Use [senior-architecture-review](.codex/skills/senior-architecture-review/SKILL.md) when a change introduces or materially changes an architectural boundary, abstraction, persistence model, external dependency, agent workflow, concurrency model, security boundary, or significant cross-cutting concern.
+
+Use [harden-repository](.codex/skills/harden-repository/SKILL.md) for GitHub repository settings, Actions security, rulesets, CodeQL, Dependabot, Sonar, secret protection, or repository hardening.
+
+Architecture review is not required for trivial or purely mechanical changes.
+Load only relevant skills. When the request authorizes the complete workflow,
+continue through refinement → implementation → PR preparation without artificial
+stops between skills. A skill does not grant additional authorization.
+
+## Default feature flow
+
+For a normal non-trivial product change, the default workflow is:
+
+1. `refine-work-item` when no suitable Issue exists;
+2. `senior-architecture-review` when the change meets its trigger conditions;
+3. `implement-issue`;
+4. `senior-architecture-review` again on the final diff when the architectural impact is significant;
+5. `prepare-pull-request` when publication is requested.
+
+Do not force every skill into every change.
+Use only the skills relevant to the task.
+
+## Simplicity
+
+Prefer the simplest complete solution that satisfies current requirements.
+
+Do not design for hypothetical future requirements.
+
+Add an abstraction only when it makes an existing boundary or variation clearer.
 
 ## Definition of done
 
-- The authorized work item and applicable specification are satisfied.
-- The change remains understandable and contains no unrelated modifications.
-- Relevant local checks and required PR checks pass; limitations are explicit.
-- The full diff contains no secrets, generated junk or weakened protections.
-- Documentation and the Issue/PR accurately describe the outcome and validation.
-- A PR awaiting maintainer review remains unmerged until explicitly authorized.
+A change is done when:
+
+- the authorized requirement and acceptance criteria are satisfied;
+- relevant tests and quality checks pass;
+- the implementation remains understandable;
+- the complete diff contains no unrelated changes;
+- no secrets or generated junk are included;
+- product documentation is updated when expected behavior changed;
+- the Pull Request is ready for maintainer review when publication was requested.
