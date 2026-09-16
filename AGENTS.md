@@ -90,6 +90,28 @@ Do not introduce another backend, frontend, or agent framework without an explic
 - Do not introduce LangChain, LangGraph, CrewAI, or another orchestration framework unless explicitly required.
 - Never hardcode or commit provider credentials.
 
+## Python coding standards
+
+Apply these conventions to new or modified Python code. Do not expand a task
+into unrelated style refactoring. Use the Python version targeted by the project.
+Consult [Python style examples](docs/python-style.md) when working on Python code.
+
+- Explicitly type public functions, methods, class attributes, service boundaries
+  and non-trivial internal APIs; prefer precise types over `Any`.
+- Use built-in generics, `X | None` and modern `type` aliases when an alias helps.
+  Retain compatibility syntax only when a dependency requires it.
+- Use `Annotated` for meaningful FastAPI or Pydantic metadata, including reusable
+  constrained types. Keep plain annotations when no metadata is needed.
+- Use Pydantic v2 APIs; keep validation with the model or type owning the invariant.
+- Introduce a `Protocol` only for a needed structural interface; prefer a concrete
+  type when sufficient. Express read-only or immutable contracts when meaningful.
+- Prefer readable control flow, `pathlib.Path`, context managers and standard
+  library solutions. Avoid mutable defaults and ambiguous boolean parameters.
+- Use exceptions for meaningful failures; catch `Exception` only at a justified
+  boundary, preserving the cause internally and protecting sensitive details.
+- Avoid `# type: ignore`; an unavoidable suppression must target the specific
+  error and explain why. Preserve the configured type-checking requirements.
+
 ## Testing and quality
 
 Normal automated tests must be deterministic and must not call a real LLM.
