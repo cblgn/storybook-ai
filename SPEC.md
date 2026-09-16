@@ -792,3 +792,87 @@ Créer l'histoire
 The application generates, reviews, and displays a complete personalized story.
 
 That is the MVP.
+
+# Engineering quality requirements
+
+The project is maintained through GitHub using pull requests.
+
+All functional changes must reach `main` through a pull request.
+
+The `main` branch is protected.
+
+A pull request must pass automated quality checks before merging.
+
+Required checks include:
+
+* Python linting;
+* Python static type checking;
+* Python tests;
+* backend code coverage;
+* frontend linting;
+* TypeScript type checking;
+* frontend tests;
+* frontend production build;
+* backend dependency vulnerability audit;
+* frontend dependency vulnerability audit.
+
+The target backend coverage for the MVP is at least 80%.
+
+CI enforces this threshold with pytest-cov and publishes a backend XML coverage
+report. Frontend tests use Vitest with Testing Library and produce LCOV coverage.
+The existing deterministic browser integration tests remain part of CI.
+
+Coverage should be used as a quality indicator rather than an incentive to create meaningless tests.
+
+Dependency updates are monitored automatically with Dependabot.
+
+Dependabot checks uv, npm/pnpm, and GitHub Actions dependencies weekly. Minor and
+patch updates may be grouped; major updates remain separate.
+
+Dependency audits cover locked runtime and development dependencies using
+pip-audit and pnpm audit. High and critical vulnerabilities must fail CI. The
+backend audit uses the stricter policy of failing on all known vulnerabilities.
+
+Static security analysis should use GitHub CodeQL when supported by the repository visibility and GitHub plan.
+
+Code quality is monitored using SonarQube Cloud.
+
+The zero-cost setup runs Sonar analysis only on pushes to `main`. It must not be
+a required pull-request check when the active plan cannot analyze those pull
+requests. Its token is supplied exclusively through the `SONAR_TOKEN` Actions
+secret. Repository-specific organization and project identifiers are configured
+before enabling analysis; placeholders contain no credentials.
+
+Protection of `main` is configured in GitHub after repository creation: require
+pull requests and passing backend, frontend, browser, and dependency audit jobs;
+disallow force pushes and deletion. Require CodeQL checks when the repository is
+public or its plan includes Code Security. Workflow files alone do not enable
+branch protection or paid features.
+
+SonarQube Cloud should analyze:
+
+* Python backend sources;
+* TypeScript/React frontend sources;
+* backend coverage;
+* frontend coverage when available;
+* reliability issues;
+* maintainability issues;
+* security issues;
+* code duplication.
+
+The repository must not contain:
+
+* API keys;
+* access tokens;
+* Codex credentials;
+* Sonar tokens;
+* `.env` files containing secrets;
+* generated dependency directories;
+* frontend production builds;
+* local application data.
+
+CI must not depend on a real LLM invocation.
+
+LLM interactions must be mocked or replaced with deterministic test models in normal automated tests.
+
+Real LLM integration tests, if introduced, must be explicitly separated from the default test suite and must not be required for normal pull request validation.

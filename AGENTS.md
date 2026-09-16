@@ -770,3 +770,115 @@ A change is complete when:
 * the end-to-end workflow remains functional;
 * the Git diff contains no unrelated modifications;
 * no credentials or generated junk are committed.
+
+# GitHub development workflow
+
+The repository uses pull requests and automated quality gates.
+
+## Task and issue traceability
+
+Every implementation task must be tracked by a GitHub issue before implementation
+begins. Search existing issues first and reuse the matching issue; do not create
+duplicates. This workflow authorizes agents to create and update task issues and
+link them to pull requests as part of an assigned implementation task.
+
+For each task:
+
+1. Read its `TASKS/` file when one exists and find or create the corresponding
+   issue. Include the task identifier in the issue title, a repository link to
+   the task file, the objective, scope, and acceptance criteria.
+2. Record the issue number in progress updates and keep its implementation and
+   validation status accurate. Keep task files unchanged once implemented.
+3. Use a dedicated feature branch and one pull request per task. Include
+   `Closes #<issue-number>` in the pull request description, with the reason for
+   the change, its scope, checks and results, limitations, and screenshots when
+   relevant. Link the pull request from the issue as well.
+4. When tasks depend on one another, state the dependency in both issues and
+   pull requests. A dependent pull request may initially target the preceding
+   task branch so its diff stays focused. After that task is merged, retarget
+   the dependent pull request to `main` and rerun the required checks.
+5. Leave the issue open while the pull request awaits merge. Closing keywords
+   take effect when the pull request targets and is merged into the default
+   branch; do not report a task as delivered to `main` before that happens.
+
+If GitHub is unavailable, continue useful local work and report the missing issue
+or pull request linkage explicitly. Do not claim that a remote issue or pull
+request was created without verifying it.
+
+Creating issues does not authorize automatic commits or merges. Follow the commit
+and merge authorization rules below.
+
+## Branches and pull requests
+
+Direct feature development on `main` is not allowed.
+
+For implementation work, use a dedicated branch with a meaningful name, for example:
+
+```text
+feat/story-writer
+feat/story-planner
+feat/story-ui
+fix/story-duration
+ci/github-quality
+```
+
+Use Conventional Commit-style commit messages:
+
+```text
+feat: add story writer agent
+fix: prevent duplicate story generation
+test: cover reviewer revision workflow
+ci: add dependency security checks
+chore: update dependencies
+docs: document local setup
+```
+
+Before proposing a pull request:
+
+1. inspect `git status`;
+2. review the complete diff;
+3. run all relevant backend checks;
+4. run all relevant frontend checks;
+5. ensure no credentials or generated files are included;
+6. verify the application still builds;
+7. summarize both the reason for the change and the implementation.
+
+A pull request description must explain **why** the change exists, not merely repeat the Git diff.
+
+For visible frontend changes, include a screenshot in the pull request when possible.
+
+Do not merge a pull request without explicit user authorization.
+
+Do not push directly to `main`.
+
+Do not bypass failing GitHub checks.
+
+Do not weaken tests, linting, type checking, coverage requirements, security checks, branch protections, or quality gates merely to make a change pass.
+
+If a quality check exposes a legitimate defect, fix the defect.
+
+If a check itself is incorrect or inappropriate, explain why before changing its configuration.
+
+Do not automatically commit unless the task explicitly asks for commits.
+
+When commits are explicitly requested:
+
+* keep commits logically coherent;
+* do not include unrelated files;
+* use clear Conventional Commit messages;
+* never rewrite published history unless explicitly requested.
+
+Dependency updates should normally be handled through Dependabot pull requests.
+
+Automated tests must not call a real LLM unless they are explicitly marked as integration tests.
+
+Normal CI must remain deterministic and must not require Codex, OpenAI, or other LLM credentials.
+
+Backend coverage must remain at least 80%. Keep the default exclusion of real-provider
+`integration` tests and the test guards that prohibit real model requests.
+
+Run the locked dependency audits described in `README.md`. High and critical
+vulnerabilities must fail CI; the backend audit fails on all known vulnerabilities.
+
+Inspect Git status and the complete task diff before finishing any implementation,
+even when no commit or pull request is requested.

@@ -10,7 +10,7 @@ unique restent la prochaine étape du MVP décrit dans `SPEC.md`.
 ## Prérequis
 
 - Python **3.14+** et [uv](https://docs.astral.sh/uv/).
-- Node.js 24.15+ sur la branche 24 (prévue pour la CI), ou 22.22.2+ sur la branche 22,
+- Node.js 24.15+ sur la branche 24 (utilisée en CI), ou 22.22.2+ sur la branche 22,
   ou 26+, et pnpm 10.34.5. Ces minimums incluent les exigences de jsdom.
 - Un fournisseur LLM configuré pour générer de vraies histoires.
 
@@ -152,3 +152,70 @@ frontend/src/
 
 Les lockfiles uv et pnpm sont intentionnellement versionnables. Les secrets,
 environnements, dépendances, caches et builds sont ignorés par Git.
+
+## Qualité et sécurité sur GitHub
+
+Les changements passent par une branche dédiée puis une pull request. Aucun
+workflow ne fusionne automatiquement les pull requests. Les workflows utilisent
+Python 3.14, Node.js 24, les lockfiles et la version pnpm de `package.json`.
+
+Chaque tâche est suivie dans une issue GitHub créée ou retrouvée avant de commencer.
+L’issue renvoie au fichier `TASKS/` et précise les critères d’acceptation. Sa PR
+inclut `Closes #<numéro>`, les résultats des vérifications et les limites restantes ;
+l’issue contient aussi un lien vers la PR. Les instructions de `AGENTS.md` imposent
+ce suivi aux agents pour les tâches suivantes. Une PR dépendante peut cibler la
+branche de la tâche précédente, puis doit être reciblée vers `main` après sa fusion.
+L’issue reste ouverte jusqu’à la livraison dans la branche par défaut, conformément
+au [fonctionnement des liens issue–PR](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue).
+
+- `ci.yml` : Ruff, mypy, pytest avec couverture, ESLint, TypeScript, Vitest,
+  build Vite et tests navigateur avec un modèle PydanticAI déterministe.
+- `security.yml` : audits des dépendances verrouillées, sur les pull requests,
+  les pushes sur `main`, chaque semaine et sur déclenchement manuel.
+- `codeql.yml` : Python et JavaScript/TypeScript, activé automatiquement pour un
+  dépôt public. Pour un dépôt privé disposant de Code Security, définir la
+  variable Actions `CODEQL_ENABLED=true`. Aucun jeton personnel nécessaire.
+- `sonar.yml` : sources et couverture des deux projets, sur `main` uniquement.
+  Les rapports sont recalculés sur le commit analysé ; aucun artefact provenant
+  d’une pull request n’est exécuté avec le secret Sonar.
+- Dependabot vérifie uv, npm/pnpm et GitHub Actions chaque semaine. Les mises à
+  jour mineures et correctives sont groupées, les majeures restent individuelles.
+
+Audits locaux, depuis la racine :
+
+```bash
+cd backend
+uv export --locked --all-groups --no-emit-project --format requirements-txt --output-file /tmp/storybook-audit.txt --quiet
+uv run pip-audit --require-hashes --disable-pip -r /tmp/storybook-audit.txt
+cd ../frontend
+pnpm audit --audit-level=high
+```
+
+Les audits incluent les dépendances de développement. `pip-audit` échoue sur
+toute vulnérabilité connue, une politique plus stricte que le seuil élevé/critique
+de `pnpm audit`. Corriger les dépendances vulnérables sans masquer les échecs.
+
+### Activation après publication du dépôt
+
+1. Dans les règles/protections de `main`, imposer une pull request et les checks
+   `Backend quality`, `Frontend quality`, `Browser integration`,
+   `Backend dependency audit` et `Frontend dependency audit`. Exiger une branche
+   à jour et interdire les force pushes et suppressions. Les noms apparaîtront
+   après une première exécution des workflows. Ces réglages sont faits dans
+   GitHub : les fichiers YAML ne protègent pas la branche à eux seuls.
+2. Activer Dependabot alerts/security updates dans les paramètres du dépôt.
+   Utiliser la configuration CodeQL avancée de ce dépôt, sans activer en parallèle
+   une configuration par défaut. Si CodeQL est disponible, exiger aussi les checks
+   `CodeQL (python)` et `CodeQL (javascript-typescript)`.
+3. Importer le dépôt dans SonarQube Cloud, choisir l’offre gratuite adaptée et
+   désactiver l’analyse automatique Sonar pour utiliser l’analyse CI. Remplacer
+   `YOUR_SONAR_ORGANIZATION` et `YOUR_SONAR_PROJECT_KEY` dans
+   `sonar-project.properties`. Ajouter `SONAR_TOKEN` aux secrets Actions et
+   `SONAR_ENABLED=true` aux variables Actions. Ne jamais versionner le jeton.
+4. Ne pas exiger Sonar pour les pull requests avec cette configuration gratuite :
+   l’analyse est déclenchée après fusion sur `main`. Consulter son résultat dans
+   SonarQube Cloud. Aucun changement d’offre payante n’est nécessaire à cette tâche.
+
+Références : [uv dans GitHub Actions](https://docs.astral.sh/uv/guides/integration/github/),
+[disponibilité de Code Security](https://docs.github.com/en/code-security/getting-started/quickstart-for-securing-your-repository),
+[SonarQube Cloud et GitHub Actions](https://docs.sonarsource.com/sonarcloud/advanced-setup/ci-based-analysis/github-actions-for-sonarcloud).
