@@ -1,0 +1,48 @@
+name: SonarQube Cloud
+
+# Main-only analysis: do not require this check for pull requests on the Free plan.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sonar-main
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: SonarQube Cloud analysis
+    # Enable after replacing the project placeholders and adding SONAR_TOKEN.
+    if: vars.SONAR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v10.1.0
+        with:
+          python-version: '3.14'
+      - run: uv sync --locked --project backend
+      - name: Backend coverage with paths relative to the repository root
+        run: uv run --no-sync --project backend pytest -c backend/pyproject.toml backend/tests --cov-config=backend/pyproject.toml --cov=backend/src/storybook --cov-report=term-missing --cov-report=xml:backend/coverage.xml
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm test:coverage
+        working-directory: frontend
+      - name: Analyze sources and coverage
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

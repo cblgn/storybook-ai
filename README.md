@@ -3,15 +3,20 @@
 Des histoires du soir personnalisées, en français. Monorepo local : React → FastAPI
 → service de génération → Writer PydanticAI → histoire structurée.
 
-La tâche 001 fournit le formulaire, la génération avec le Writer, l’affichage,
+Le socle actuel fournit le formulaire, la génération avec le Writer, l’affichage,
 les erreurs et la connexion de santé. Le Planner, le Reviewer et la révision
-unique restent la prochaine étape du MVP décrit dans `SPEC.md`.
+unique restent la prochaine étape du MVP décrit dans [SPEC.md](SPEC.md).
+
+Pour contribuer, suivre [CONTRIBUTING.md](CONTRIBUTING.md) : une issue GitHub
+décrit le travail, une PR en porte l’implémentation. Les instructions des agents
+sont dans [AGENTS.md](AGENTS.md) ; les décisions d’architecture significatives
+se documentent dans [docs/adr/](docs/adr/README.md).
 
 ## Prérequis
 
 - Python **3.14+** et [uv](https://docs.astral.sh/uv/).
-- Node.js 24.15+ sur la branche 24 (prévue pour la CI), ou 22.22.2+ sur la branche 22,
-  ou 26+, et pnpm 10.34.5. Ces versions sont celles prises en charge par le projet.
+- Node.js 24.15+ sur la branche 24 (utilisée en CI), ou 22.22.2+ sur la branche 22,
+  ou 26+, et pnpm 10.34.5. Ces minimums incluent les exigences de jsdom.
 - Un fournisseur LLM configuré pour générer de vraies histoires.
 
 Si pnpm n’est pas installé : `npm install --global pnpm@10.34.5`.
@@ -101,26 +106,9 @@ Les erreurs de validation retournent 422 ; les échecs de génération retournen
 
 ## Vérifications
 
-```bash
-cd backend
-uv run pytest
-uv run ruff check .
-uv run mypy src
-```
-
-```bash
-cd frontend
-pnpm lint
-pnpm build
-pnpm exec playwright install chromium
-pnpm test:e2e
-```
-
-Les tests Python interdisent les appels à un vrai LLM. Les tests navigateur
-démarrent FastAPI et Vite avec un `TestModel` PydanticAI déterministe. Ils couvrent
-le proxy, les champs, l’envoi, les résultats, l’attente et la reprise après erreur,
-sur ordinateur et mobile. Libérer les ports 8000 et 5173 avant `pnpm test:e2e`.
-Les tests de fournisseur réel sont marqués `integration` et exclus par défaut.
+Les commandes de tests, lint, typage, couverture et audits sont regroupées dans
+[CONTRIBUTING.md](CONTRIBUTING.md#vérifications-locales). Les tests ordinaires
+utilisent des modèles déterministes et ne nécessitent aucun identifiant LLM.
 
 `pnpm build` produit `frontend/dist`. FastAPI ne sert pas encore ce build ;
 utiliser `./scripts/dev.sh` pour le parcours complet en développement.
@@ -142,3 +130,6 @@ frontend/src/
 
 Les lockfiles uv et pnpm sont intentionnellement versionnables. Les secrets,
 environnements, dépendances, caches et builds sont ignorés par Git.
+
+Les règles de contribution, les contrôles GitHub et leur activation sont décrits
+dans [CONTRIBUTING.md](CONTRIBUTING.md).
