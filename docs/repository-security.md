@@ -22,7 +22,7 @@ proof of repository enforcement.
 | Python and JS/TS CodeQL | Advanced workflow; default setup not configured | Required jobs and CodeQL rule blocking all alert severities | Merge | Free public repository |
 | Dependency audits | pip-audit rejects all known vulnerabilities; pnpm rejects high/critical | Required Security workflow | Merge | Free |
 | Deterministic quality and coverage | Backend threshold 80%; frontend reports coverage without arbitrary threshold | Required CI workflow | Merge | Free |
-| Sonar analysis with coverage | Automatic main gate OK, no open findings; CI migration validation pending | Existing Sonar app; prepared main-only workflow | CI waits for the Quality Gate; activation verification pending | Existing public automatic PR analysis works; CI limited to main |
+| Sonar analysis with coverage | CI enabled; automatic analysis disabled and verified; application reports imported | Main-only workflow and existing Sonar Quality Gate | Fails the main analysis job; not a pre-merge check | Current free public project; no paid branch analysis |
 
 Required check names: `Backend quality`, `Frontend quality`, `Browser integration`,
 `Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` and
@@ -72,10 +72,18 @@ notice; there is no silent fallback. The token is available only to the migratio
 and scanner steps, never to PR tests. The first migration requires project
 administration permission; subsequent runs only verify the disabled state.
 
-Set `SONAR_ENABLED=true` and dispatch `sonar.yml` on main to activate the configured
-pipeline. End-to-end CI validation is pending in issue #13; do not infer success
-from the secret's presence. The prior automatic analysis of main `8092abf` had a
-passing gate, A ratings, zero vulnerabilities/hotspots, and no coverage measure.
+`SONAR_ENABLED=true` is configured. The first authenticated CI scan of `6bb8358`
+verified automatic analysis was disabled and imported backend coverage (97.2%)
+and frontend coverage (90.4%). It found no issues, but the Quality Gate correctly
+failed because new security scripts had no imported coverage. Script regression
+tests now exercise API failures, ineffective/weakened protections and migration
+verification; their XML report is imported alongside application coverage. Tests
+run offline without credentials. The scanner's GPG signature verification is
+explicitly enabled, overriding the vendor Action's temporary insecure default.
+The [activation issue #13](https://github.com/cblgn/storybook-ai/issues/13) records
+the final run and effective metrics. A successful analysis must match the expected
+Git revision and publish coverage for both source trees; neither the gate nor
+source scope has been weakened.
 See [the original security triage](sonar-security-triage.md). A successful GitHub
 security verifier run does not establish Sonar analysis or coverage status.
 

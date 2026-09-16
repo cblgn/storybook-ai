@@ -1,7 +1,8 @@
 """Regression checks for fail-closed analysis migration; no network or credentials."""
 
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 
 import sonar_analysis_mode as sonar
 
@@ -49,6 +50,30 @@ class AnalysisModeTests(unittest.TestCase):
             None, None, 302, "", {}, "https://example.com"
         )
         self.assertIsNone(result)
+
+    @patch.object(sonar, "request")
+    def test_permission_failure_stops_migration(self, request):
+        error = HTTPError("", 403, "Forbidden", {}, None)
+        request.side_effect = [state("true"), error]
+        try:
+            with self.assertRaises(HTTPError):
+                sonar.enforce_ci_analysis("test-placeholder")
+        finally:
+            error.close()
+        self.assertEqual(request.call_count, 2)
+
+    @patch.object(sonar, "build_opener")
+    def test_transport_uses_fixed_host_and_encoded_post(self, opener):
+        response = MagicMock()
+        response.read.side_effect = [b'{"settings": []}', b'']
+        opener.return_value.open.return_value.__enter__.return_value = response
+        self.assertEqual(sonar.request("settings/values", "test-placeholder"), {"settings": []})
+        self.assertIsNone(sonar.request("autoscan/activation", "test-placeholder", {"enable": "false"}))
+        sent = opener.return_value.open.call_args.args[0]
+        self.assertEqual(sent.full_url, "https://sonarcloud.io/api/autoscan/activation")
+        self.assertEqual(sent.get_method(), "POST")
+        self.assertEqual(sent.data, b"enable=false")
+        self.assertEqual(sent.get_header("Authorization"), "Bearer test-placeholder")
 
 
 if __name__ == "__main__":
