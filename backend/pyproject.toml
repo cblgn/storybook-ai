@@ -15,8 +15,10 @@ dependencies = [
 dev = [
     "httpx>=0.28,<1",
     "mypy>=1.15,<2",
+    "pip-audit>=2.9,<3",
     "pytest>=8.3,<10",
     "pytest-asyncio>=1,<2",
+    "pytest-cov>=7,<8",
     "ruff>=0.11,<1",
 ]
 
@@ -32,6 +34,13 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-m 'not integration'"
 markers = ["integration: explicitly invoked tests requiring a real LLM provider"]
+
+[tool.coverage.run]
+relative_files = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
 
 [tool.ruff]
 target-version = "py314"

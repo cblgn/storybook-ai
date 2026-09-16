@@ -6,6 +6,12 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 *.egg-info/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+coverage/
+.scannerwork/
 
 # Secrets and local agent configuration
 .env

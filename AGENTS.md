@@ -27,8 +27,13 @@ storybook-ai/
 ├── AGENTS.md
 ├── SPEC.md
 ├── README.md
-├── TASKS/
-│   └── 001-bootstrap.md
+├── CONTRIBUTING.md
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   ├── pull_request_template.md
+│   └── workflows/
+├── docs/
+│   └── adr/
 │
 ├── backend/
 │   ├── pyproject.toml
@@ -50,18 +55,29 @@ Do not create separate Git repositories for the frontend and backend.
 Before implementing a change, use these sources in this order:
 
 1. the current user request;
-2. the relevant file under `TASKS/`;
+2. the relevant GitHub Issue, when one exists;
 3. `SPEC.md`;
 4. `AGENTS.md`;
-5. existing code and tests.
+5. `CONTRIBUTING.md`;
+6. existing code and tests.
 
-`SPEC.md` describes what the product should do.
+`SPEC.md` is the versioned product specification: it defines product behavior and
+requirements.
 
-`AGENTS.md` describes how the project should be developed.
+`AGENTS.md` defines stable development instructions for coding agents.
 
-Files under `TASKS/` describe individual implementation missions.
+GitHub Issues define individual units of work: implementation tasks, bugs, and
+enhancements. When an Issue exists, it is the authoritative task description.
+Pull Requests represent their implementation; normally one implementation Issue
+maps to one Pull Request.
 
-If a task conflicts with `SPEC.md`, identify the conflict before implementing it.
+`README.md` introduces the project and explains local setup. `CONTRIBUTING.md`
+documents the human/GitHub contribution workflow. ADRs under `docs/adr/` record
+only significant architectural decisions, not ordinary tasks or progress reports.
+
+If an Issue conflicts with `SPEC.md`, identify the conflict before implementing it.
+Update the specification explicitly when an authorized change alters product
+requirements; do not silently treat an Issue as an amendment to the specification.
 
 ---
 
@@ -634,6 +650,7 @@ Before backend work is considered complete:
 
 ```bash
 uv run pytest
+uv run pytest --cov=src/storybook --cov-report=term-missing --cov-report=xml
 uv run ruff check .
 uv run mypy src
 ```
@@ -646,53 +663,49 @@ Before frontend work is considered complete:
 
 ```bash
 pnpm lint
+pnpm typecheck
+pnpm test:coverage
 pnpm build
 pnpm test:e2e
+```
+
+If frontend tests exist:
+
+```bash
+pnpm test
 ```
 
 ---
 
 # Development workflow
 
-For every task:
+Follow `CONTRIBUTING.md`. For every change:
 
-1. Read the relevant task file if one exists.
-2. Read the relevant sections of `SPEC.md`.
-3. Inspect existing code.
-4. Run `git status`.
-5. Identify the smallest coherent implementation.
-6. Add or update tests where appropriate.
-7. Implement the change.
-8. Run relevant quality checks.
-9. Review the resulting Git diff.
-10. Report what changed and any remaining limitations.
+1. Inspect `git status`, the current branch, history, and existing modifications.
+2. Read the relevant GitHub Issue and sections of `SPEC.md`.
+3. Inspect existing code and identify the smallest coherent implementation.
+4. Start a dedicated branch from an up-to-date `main`, preserving unrelated work.
+5. Implement the change and add or update meaningful tests where appropriate.
+6. Run the relevant local quality checks and locked dependency audits.
+7. Inspect `git status` again and review the complete diff before finishing,
+   including new files, even when no commit or PR is requested.
+8. Report the related Issue, changes, validation results, and remaining limitations.
+9. When publication is authorized, create the linked PR and verify the required
+   GitHub CI/security checks before proposing a merge.
 
 Do not rewrite unrelated code.
 
 ---
 
-# Task files
+# Temporary bootstrap migration
 
-Implementation missions may be stored under:
-
-```text
-TASKS/
-```
-
-Example:
-
-```text
-TASKS/
-├── 001-bootstrap.md
-├── 002-story-generation.md
-└── 003-ui-polish.md
-```
-
-Task files are part of the repository history.
-
-Once a task has been implemented, do not silently modify it to match the implementation.
-
-If requirements change, create a new task or explicitly update the specification.
+`TASKS/001-bootstrap.md` and `TASKS/002-github-quality.md` are legacy bootstrap
+artifacts retained temporarily for GitHub migration. Preserve their contents until
+both tasks are represented by GitHub Issues and their Pull Requests have merged.
+Only then may a separate change remove `TASKS/`. Future work must originate in
+GitHub Issues; do not create new task files. GitHub assigns Issue and PR numbers
+from a shared sequence, so record the actual links rather than assuming numbers
+match the legacy task identifiers.
 
 ---
 
@@ -753,7 +766,7 @@ Unless explicitly requested, do not implement:
 
 A change is complete when:
 
-* it satisfies the relevant task and `SPEC.md`;
+* it satisfies the relevant Issue (or explicit user request) and `SPEC.md`;
 * code remains understandable;
 * relevant tests pass;
 * backend type/lint checks pass;
@@ -761,3 +774,126 @@ A change is complete when:
 * the end-to-end workflow remains functional;
 * the Git diff contains no unrelated modifications;
 * no credentials or generated junk are committed.
+
+# GitHub development workflow
+
+The repository uses pull requests and automated quality gates.
+
+## Task and issue traceability
+
+Write GitHub Issue titles and bodies in English, including requirements,
+acceptance criteria, and technical notes. Agent-authored Issue updates must also
+be in English, even when the user conversation or application UI is in French.
+Preserve code identifiers and quoted UI text in their original language.
+
+Future implementation work starts from a GitHub Issue. Search existing Issues
+first and reuse the matching Issue; do not create duplicates. Respect explicit
+user limits on remote operations. If remote work is not authorized or GitHub is
+unavailable, continue authorized local work, prepare descriptions locally, and
+report the pending Issue/PR linkage rather than claiming it already exists.
+
+For each Issue:
+
+1. Use its objective, requirements, scope, and acceptance criteria as the task
+   description. Link relevant `SPEC.md` sections rather than copying the product
+   specification into the Issue.
+2. Record the Issue number in progress updates and keep implementation and
+   validation status accurate.
+3. Normally use one branch and one PR per implementation Issue. Include
+   `Closes #<issue>` in the PR description, with the reason for the change, its
+   scope, checks and results, limitations, and screenshots for UI changes.
+   Link the PR from the Issue as well. Explain any exception to the one-to-one
+   mapping in the Issue and PR.
+4. Prefer independent PRs targeting `main`. If a dependent PR must temporarily
+   target another feature branch, state that dependency explicitly. After the
+   prerequisite is squash merged, reconcile the dependent branch with `main`
+   without rewriting published history, retarget its PR, review the complete
+   diff, and rerun checks. Do not merge a dependent PR into the prerequisite
+   feature branch.
+5. Leave the Issue open while the PR awaits merge. Closing keywords
+   take effect when the PR targets and is merged into the default
+   branch; do not report a task as delivered to `main` before that happens.
+
+Issue tracking does not authorize automatic commits or merges. Follow the commit
+and merge authorization rules below. Record a significant architectural decision
+in an ADR only when needed; link it from the Issue and PR.
+
+## Branches and pull requests
+
+Direct feature development on `main` is not allowed.
+
+For implementation work, use a dedicated branch with a meaningful name, for example:
+
+```text
+feat/12-story-writer
+fix/18-story-duration
+ci/23-codeql
+docs/27-architecture
+```
+
+Use Conventional Commit-style commit messages:
+
+```text
+feat: add story writer agent
+fix: prevent duplicate story generation
+test: cover reviewer revision workflow
+ci: add dependency security checks
+chore: update dependencies
+docs: document local setup
+```
+
+Before proposing a pull request:
+
+1. inspect `git status`;
+2. review the complete diff;
+3. run all relevant backend checks;
+4. run all relevant frontend checks;
+5. ensure no credentials or generated files are included;
+6. verify the application still builds;
+7. summarize both the reason for the change and the implementation.
+
+A pull request description must explain **why** the change exists, not merely repeat the Git diff.
+
+For visible frontend changes, include a screenshot in the pull request when possible.
+
+Do not merge a pull request without explicit user authorization.
+
+When a merge is authorized, use squash merge into `main` after the required checks
+and review pass. The squash commit message must follow Conventional Commits.
+Use GitHub's automatic deletion of merged head branches when configured; do not
+manually delete branches without authorization. Document repository settings in
+`CONTRIBUTING.md`; documentation alone does not configure GitHub.
+
+Do not push directly to `main`.
+
+Do not bypass failing GitHub checks.
+
+Do not weaken tests, linting, type checking, coverage requirements, security checks, branch protections, or quality gates merely to make a change pass.
+
+If a quality check exposes a legitimate defect, fix the defect.
+
+If a check itself is incorrect or inappropriate, explain why before changing its configuration.
+
+Do not automatically commit unless the task explicitly asks for commits.
+
+When commits are explicitly requested:
+
+* keep commits logically coherent;
+* do not include unrelated files;
+* use clear Conventional Commit messages;
+* never rewrite published history unless explicitly requested.
+
+Dependency updates should normally be handled through Dependabot pull requests.
+
+Automated tests must not call a real LLM unless they are explicitly marked as integration tests.
+
+Normal CI must remain deterministic and must not require Codex, OpenAI, or other LLM credentials.
+
+Backend coverage must remain at least 80%. Keep the default exclusion of real-provider
+`integration` tests and the test guards that prohibit real model requests.
+
+Run the locked dependency audits described in `CONTRIBUTING.md`. High and critical
+vulnerabilities must fail CI; the backend audit fails on all known vulnerabilities.
+
+Inspect Git status and the complete task diff before finishing any implementation,
+even when no commit or pull request is requested.
