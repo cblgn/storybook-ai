@@ -549,7 +549,7 @@ No server-side rendering is necessary.
 
 Use:
 
-* Python 3.13+;
+* Python 3.14+;
 * FastAPI;
 * Pydantic v2;
 * PydanticAI;
