@@ -1,0 +1,58 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Dependabot merge policy
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # These writes enable/disable auto-merge only. Never check out or run PR code.
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Read verified Dependabot metadata
+        if: '!github.event.pull_request.draft'
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+      - name: Enable squash auto-merge for minor and patch updates
+        if: >-
+          !github.event.pull_request.draft &&
+          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-patch')
+        run: gh pr merge "$PR_URL" --auto --squash --match-head-commit "$PR_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+      - name: Remove auto-merge when the PR is no longer eligible
+        if: >-
+          always() &&
+          (github.event.pull_request.draft || steps.metadata.outcome != 'success' ||
+           (steps.metadata.outputs.update-type != 'version-update:semver-minor' &&
+            steps.metadata.outputs.update-type != 'version-update:semver-patch'))
+        run: |
+          enabled="$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')"
+          if [ "$enabled" = true ]; then
+            gh pr merge "$PR_URL" --disable-auto
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
