@@ -22,7 +22,7 @@ proof of repository enforcement.
 | Python and JS/TS CodeQL | Advanced workflow; default setup not configured | Required jobs and CodeQL rule blocking all alert severities | Merge | Free public repository |
 | Dependency audits | pip-audit rejects all known vulnerabilities; pnpm rejects high/critical | Required Security workflow | Merge | Free |
 | Deterministic quality and coverage | Backend threshold 80%; frontend reports coverage without arbitrary threshold | Required CI workflow | Merge | Free |
-| Sonar analysis with coverage | Automatic PR #12 Quality Gate OK, no open findings; CI coverage authentication unavailable | Existing Sonar app; prepared main-only workflow | Advisory PR check; CI activation incomplete | Existing public automatic PR analysis works; CI limited to main |
+| Sonar analysis with coverage | Automatic main gate OK, no open findings; CI migration validation pending | Existing Sonar app; prepared main-only workflow | CI waits for the Quality Gate; activation verification pending | Existing public automatic PR analysis works; CI limited to main |
 
 Required check names: `Backend quality`, `Frontend quality`, `Browser integration`,
 `Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` and
@@ -53,31 +53,31 @@ credential patterns; GitHub reported no open secret-scanning alerts. Pattern sca
 are not proof that no secret can exist. See [SECURITY.md](../SECURITY.md) for private
 reporting and rotation guidance. Do not log scanner payloads containing secrets.
 
-## Sonar external activation
+## Sonar CI analysis
 
-The existing public project is `cblgn_storybook-ai` in organization `cblgn`.
-`sonar-project.properties` maps both source trees and the backend XML/frontend LCOV
-reports into that single project. Generated files and caches are excluded. The
-public automatic analysis initially reported 18 Actions/install security findings;
-this PR pins Actions and adds uv's no-build option to address their source causes.
-The existing Sonar app subsequently analyzed PR #12: Quality Gate OK, no open
-findings, A ratings on new-code security/reliability/maintainability, and no new
-duplication. Coverage is still unavailable to that automatic analysis. Main results
-remain separate until analysis of the merged commit.
+The public project is `cblgn_storybook-ai` in organization `cblgn`. The Actions
+repository secret is configured. CI analysis is restricted to trusted `main` and
+uses a single project for backend/frontend sources, workflows and maintenance
+scripts. Backend XML and frontend LCOV reports must both exist before scanning.
+The scanner waits for the Quality Gate; analysis errors and failing gates fail the
+workflow. Main-only Sonar is not a required PR check and cannot prevent the merge
+that precedes its run. The seven existing PR gates and CodeQL protection remain
+blocking. No paid branch-analysis capability is enabled.
 
-No SONAR_TOKEN Actions secret, authenticated Sonar CLI or Sonar token environment
-is available. GitHub authentication cannot administer the Sonar account. Once Sonar
-authentication is available, disable the project's automatic analysis via its API,
-configure `SONAR_TOKEN` through the GitHub secret API/CLI without exposing its value,
-then set `SONAR_ENABLED=true` and dispatch `sonar.yml` on main. The workflow waits
-for the Quality Gate and fails if analysis or the gate fails. The ref guard prevents
-manual execution on a feature branch with this secret.
+`sonar_analysis_mode.py` reads `sonar.autoscan.enabled`, disables automatic analysis
+only if necessary, then rereads the effective setting. Missing or unreadable state,
+API failure or a still-enabled setting blocks the scan. The migration uses the
+Sonar UI's internal `api/autoscan/activation` endpoint, which can change without
+notice; there is no silent fallback. The token is available only to the migration
+and scanner steps, never to PR tests. The first migration requires project
+administration permission; subsequent runs only verify the disabled state.
 
-The existing public Sonar app provides automatic PR analysis at no added charge
-from this task. No additional branch/PR entitlement or paid plan was enabled. The
-prepared CI pipeline remains main-only; automatic and CI analysis must not overlap. Sonar
-badges are intentionally absent until the gate and coverage provide real signals.
-A successful GitHub API verification does **not** mean Sonar activation is complete.
+Set `SONAR_ENABLED=true` and dispatch `sonar.yml` on main to activate the configured
+pipeline. End-to-end CI validation is pending in issue #13; do not infer success
+from the secret's presence. The prior automatic analysis of main `8092abf` had a
+passing gate, A ratings, zero vulnerabilities/hotspots, and no coverage measure.
+See [the original security triage](sonar-security-triage.md). A successful GitHub
+security verifier run does not establish Sonar analysis or coverage status.
 
 References: [rulesets on public GitHub Free repositories](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets),
 [CodeQL merge protection](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/manage-your-configuration/set-merge-protection),

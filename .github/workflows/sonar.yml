@@ -16,7 +16,7 @@ concurrency:
 jobs:
   analyze:
     name: SonarQube Cloud analysis
-    # Enable only after SONAR_TOKEN is configured and automatic analysis is disabled.
+    # The first step verifies/disables automatic analysis before any CI scan.
     if: github.ref == 'refs/heads/main' && vars.SONAR_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -25,6 +25,10 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Enforce CI-only analysis
+        run: python3 scripts/sonar_analysis_mode.py
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           python-version: '3.14'
@@ -43,6 +47,8 @@ jobs:
         working-directory: frontend
       - run: pnpm test:coverage
         working-directory: frontend
+      - name: Verify both coverage reports exist
+        run: test -s backend/coverage.xml && test -s frontend/coverage/lcov.info
       - name: Analyze sources and coverage
         uses: SonarSource/sonarqube-scan-action@c7ee0f9df90b7aa20e8dcf9695dcfe2e7da5b4f2 # v7.2.1
         with:
