@@ -11,11 +11,11 @@ proof of repository enforcement.
 | Desired protection | Verified effective state | Enforcement | Blocking | Plan dependency |
 |---|---|---|---|---|
 | PRs, current base, resolved conversations | Active Protect main, zero required approvals, no bypass actors | Repository ruleset | Merge | Free on public repositories |
-| Seven quality/security checks | Required from GitHub Actions, app 15368 | Ruleset strict status checks | Merge | Free on public repositories |
+| Eight quality/security checks | Required from GitHub Actions, app 15368 | Ruleset strict status checks | Merge | Free on public repositories |
 | Linear history, no force push or deletion | Active | Ruleset | Push/merge/deletion | Free on public repositories |
 | Squash only, automatic branch deletion | Enabled; merge/rebase methods disabled | Repository settings | Other merge methods | Free |
 | Token read-only, no Actions PR approval | Enabled | Actions repository permissions | Token operations | Free |
-| Full SHA pins and official Actions | Mandatory SHA policy; GitHub plus three explicit official vendors | Actions execution policy and reviewed workflow pins | Workflow execution | Free for this repository |
+| Full SHA pins and official Actions | Mandatory SHA policy; GitHub plus four explicit official Actions/vendors | Actions execution policy and reviewed workflow pins | Workflow execution | Free for this repository |
 | Dependency graph, vulnerability alerts, security updates | Enabled; SBOM API returns dependencies | GitHub/Dependabot | Detection and update PRs; audits block merge | Free public repository |
 | Private vulnerability reporting | Enabled | GitHub advisories | Private intake | Free public repository |
 | Secret scanning and push protection | Enabled | GitHub secret protection | Detection / blocks supported secret pushes | Free public repository |
@@ -26,7 +26,7 @@ proof of repository enforcement.
 
 Required check names: `Backend quality`, `Frontend quality`, `Browser integration`,
 `Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` and
-`CodeQL (javascript-typescript)`. The expected ruleset payload is versioned in
+`CodeQL (javascript-typescript)`, plus `Dependabot merge policy`. The expected ruleset payload is versioned in
 [protect-main.json](../.github/rulesets/protect-main.json). No signing requirement,
 paid merge queue or additional reviewer is introduced. Administrators must not
 change protections merely to merge a failing PR.
@@ -36,11 +36,22 @@ change protections merely to merge a failing PR.
 All remote Actions use upstream-resolved full commit SHAs with release comments.
 Dependabot checks Actions, uv and npm/pnpm weekly, grouping minor/patch upgrades.
 GitHub-owned Actions and `astral-sh/setup-uv`, `pnpm/action-setup` and
-`SonarSource/sonarqube-scan-action` are the only allowed remote vendors/actions.
+`SonarSource/sonarqube-scan-action` and `dependabot/fetch-metadata` are the only
+allowed remote vendors/actions.
 Checkout credentials are not persisted. Only the CodeQL job requests
 `security-events: write`; it does not require packages access for this public repo.
 No workflow executes PR code through `pull_request_target` or interpolates PR text
 into shell commands. Superseded PR runs are cancelled; jobs have timeouts.
+
+Dependabot minor/patch PRs from this repository targeting main can automatically
+request squash merge. The pinned official metadata action verifies the Dependabot
+author/commits and reports the highest update type in a group. Major, draft and
+unknown updates are not eligible; existing auto-merge is removed if eligibility
+changes. The required `Dependabot merge policy` job blocks metadata/API failures.
+Human PRs skip this bot-specific check. Only this job receives `contents: write`
+and `pull-requests: write`, needed to manage auto-merge. It never checks out or
+executes PR code, approves reviews, or uses administrator bypass. Required checks,
+current-base enforcement, resolved conversations and CodeQL rules govern the merge.
 
 The uv install/run commands use `--no-build` to refuse new third-party source
 builds. uv may reuse cached wheels and still builds the reviewed first-party
@@ -61,7 +72,7 @@ uses a single project for backend/frontend sources, workflows and maintenance
 scripts. Backend XML and frontend LCOV reports must both exist before scanning.
 The scanner waits for the Quality Gate; analysis errors and failing gates fail the
 workflow. Main-only Sonar is not a required PR check and cannot prevent the merge
-that precedes its run. The seven existing PR gates and CodeQL protection remain
+that precedes its run. The required PR gates and CodeQL protection remain
 blocking. No paid branch-analysis capability is enabled.
 
 `sonar_analysis_mode.py` reads `sonar.autoscan.enabled`, disables automatic analysis

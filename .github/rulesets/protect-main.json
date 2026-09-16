@@ -65,6 +65,10 @@
           {
             "context": "CodeQL (javascript-typescript)",
             "integration_id": 15368
+          },
+          {
+            "context": "Dependabot merge policy",
+            "integration_id": 15368
           }
         ],
         "strict_required_status_checks_policy": true,

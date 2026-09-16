@@ -37,7 +37,8 @@ def protected_repository():
         "actions/permissions/selected-actions": {
             "github_owned_allowed": True, "verified_allowed": False,
             "patterns_allowed": ["pnpm/action-setup@*", "astral-sh/setup-uv@*",
-                                 "SonarSource/sonarqube-scan-action@*"],
+                                 "SonarSource/sonarqube-scan-action@*",
+                                 "dependabot/fetch-metadata@*"],
         },
         "rulesets?includes_parents=true": [ruleset],
         "rulesets/123": ruleset,

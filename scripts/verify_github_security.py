@@ -63,6 +63,7 @@ def main() -> int:
           "Actions allowlist", "Yes")
     check("Official vendor allowlist", sorted([
         "astral-sh/setup-uv@*", "pnpm/action-setup@*", "SonarSource/sonarqube-scan-action@*",
+        "dependabot/fetch-metadata@*",
     ]), sorted(selected.get("patterns_allowed", [])), "Actions allowlist", "Yes")
 
     desired_ruleset = json.loads((ROOT / ".github/rulesets/protect-main.json").read_text())
