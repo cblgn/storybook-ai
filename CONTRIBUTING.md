@@ -135,13 +135,25 @@ branche à jour, conversations résolues, historique linéaire, force pushes et 
 interdits. Zéro approbation est obligatoire pour permettre la maintenance en solo.
 Les checks requis sont `Backend quality`, `Frontend quality`, `Browser integration`,
 `Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` et
-`CodeQL (javascript-typescript)`, provenant de GitHub Actions. Une règle CodeQL
+`CodeQL (javascript-typescript)` et `Dependabot merge policy`, provenant de GitHub Actions. Une règle CodeQL
 supplémentaire bloque les alertes, y compris lorsqu’un job d’analyse a réussi.
 
 Le dépôt autorise uniquement le squash merge, supprime automatiquement les branches
-fusionnées et permet l’auto-merge. Son activation pour une PR nécessite l’autorisation
-explicite du mainteneur et le respect de toutes les protections. Aucun auto-merge
-général des PR Dependabot n’est configuré.
+fusionnées et permet l’auto-merge. Les PR Dependabot mineures ou patch sont éligibles
+à l’auto-merge squash, y compris
+les groupes dont la mise à jour la plus importante est mineure ou patch. Les
+métadonnées officielles et la signature des commits sont vérifiées ; une version
+majeure, un brouillon ou des métadonnées inconnues restent manuels. Toute autre PR
+nécessite l’autorisation explicite du mainteneur.
+
+Le workflow `dependabot-auto-merge.yml` utilise uniquement les métadonnées GitHub,
+sans checkout ni exécution du code de la PR, sans approbation automatique. Ses
+permissions d’écriture sont limitées au job qui active ou retire l’auto-merge.
+Le check `Dependabot merge policy` s’ajoute aux contrôles obligatoires pour bloquer
+une erreur de classification ; il est ignoré pour les PR non Dependabot. Une PR
+qui cesse d’être éligible perd son auto-merge. Les checks requis, CodeQL, les
+conversations résolues et la mise à jour avec `main` restent obligatoires. Aucun
+contournement administrateur n’est utilisé.
 
 Les tokens Actions sont en lecture seule par défaut et ne peuvent pas approuver de
 PR. Les Actions distantes doivent être épinglées à un SHA complet avec un commentaire
