@@ -27,7 +27,7 @@ les citations de l’interface dans leur langue d’origine.
    résultats. Les tests ordinaires restent déterministes, sans vrai LLM.
 6. Relire `git status` et le diff complet, y compris les nouveaux fichiers.
    Ajouter uniquement les fichiers concernés puis commiter avec Conventional
-   Commits. Un agent ne crée de commit que sur demande explicite.
+   Commits.
 7. Pousser la branche avec `git push -u origin <branche>`.
 8. Créer une PR vers `main` avec le modèle fourni et `Closes #<issue>`.
    Expliquer le pourquoi, le résultat, les validations et les limites ; ajouter
@@ -71,10 +71,6 @@ et relancer les checks. Les mots de fermeture d’issue ne sont interprétés qu
 pour une PR ciblant la branche par défaut. Ne pas fusionner dans la branche
 intermédiaire pour contourner ce parcours.
 
-Les agents respectent les limites de publication données par l’utilisateur.
-Si les opérations distantes sont interdites ou indisponibles, préparer localement
-les descriptions nécessaires et signaler ce qui reste à publier.
-
 ## Vérifications locales
 
 Backend, depuis `backend/` :
@@ -116,83 +112,33 @@ Les audits incluent les dépendances verrouillées de production et de développ
 être ajouté aux commits. Pour une modification uniquement documentaire, vérifier
 les liens, les modèles et le diff ; expliquer les contrôles applicatifs non pertinents.
 
-## Contrôles et réglages GitHub
+## Revue et contrôles GitHub
 
-Les workflows existants utilisent Python 3.14, Node.js 24, pnpm et les lockfiles :
+Les workflows de qualité, audits et CodeQL doivent réussir avant fusion. Le
+ruleset `Protect main` impose une branche à jour, les conversations résolues et un
+historique linéaire ; force pushes et suppression de `main` sont interdits.
+Aucune approbation d’un second mainteneur n’est requise pour ce projet solo.
 
-- `ci.yml` : qualité backend/frontend, couverture et tests navigateur.
-- `security.yml` : audits sur les PR, les pushes vers `main`, chaque semaine et
-  sur déclenchement manuel.
-- `codeql.yml` : Python et JavaScript/TypeScript sur dépôt public ; pour un dépôt
-  privé disposant de Code Security, activer `CODEQL_ENABLED=true`.
-- `sonar.yml` : sources et couverture des deux projets, recalculées sur le commit
-  analysé, uniquement sur `main`. Aucun artefact d’une PR n’est exécuté avec le secret.
-- Dependabot : uv, npm/pnpm et Actions chaque semaine ; groupes mineurs/correctifs,
-  mises à jour majeures séparées.
+GitHub autorise uniquement le squash merge et supprime les branches fusionnées.
+La politique Dependabot autorise l’auto-merge des versions mineures et patch, y
+compris les groupes dont la mise à jour la plus importante reste mineure ou patch.
+Les versions majeures, brouillons et métadonnées inconnues restent manuels. Tous
+les contrôles et protections s’appliquent aussi aux fusions automatiques.
+Cette politique ne donne pas à Codex l’autorisation de fusionner une autre PR.
 
-Le ruleset **Protect main** est actif, sans acteur de contournement : PR obligatoire,
-branche à jour, conversations résolues, historique linéaire, force pushes et suppression
-interdits. Zéro approbation est obligatoire pour permettre la maintenance en solo.
-Les checks requis sont `Backend quality`, `Frontend quality`, `Browser integration`,
-`Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` et
-`CodeQL (javascript-typescript)` et `Dependabot merge policy`, provenant de GitHub Actions. Une règle CodeQL
-supplémentaire bloque les alertes, y compris lorsqu’un job d’analyse a réussi.
+Sonar analyse `main` après fusion et consomme les rapports de couverture. Son
+résultat ne doit pas être présenté comme un check exécuté sur la PR lorsque le
+workflow ne l’a pas analysée. Consulter les résultats GitHub/Sonar disponibles
+et préciser toute limite dans la PR.
 
-Le dépôt autorise uniquement le squash merge, supprime automatiquement les branches
-fusionnées et permet l’auto-merge. Les PR Dependabot mineures ou patch sont éligibles
-à l’auto-merge squash, y compris
-les groupes dont la mise à jour la plus importante est mineure ou patch. Les
-métadonnées officielles et la signature des commits sont vérifiées ; une version
-majeure, un brouillon ou des métadonnées inconnues restent manuels. Toute autre PR
-nécessite l’autorisation explicite du mainteneur.
-
-Le workflow `dependabot-auto-merge.yml` utilise uniquement les métadonnées GitHub,
-sans checkout ni exécution du code de la PR, sans approbation automatique. Ses
-permissions d’écriture sont limitées au job qui active ou retire l’auto-merge.
-Le check `Dependabot merge policy` s’ajoute aux contrôles obligatoires pour bloquer
-une erreur de classification ; il est ignoré pour les PR non Dependabot. Une PR
-qui cesse d’être éligible perd son auto-merge. Les checks requis, CodeQL, les
-conversations résolues et la mise à jour avec `main` restent obligatoires. Aucun
-contournement administrateur n’est utilisé.
-
-Les tokens Actions sont en lecture seule par défaut et ne peuvent pas approuver de
-PR. Les Actions distantes doivent être épinglées à un SHA complet avec un commentaire
-de version ; GitHub et les fournisseurs officiels explicitement autorisés peuvent
-être utilisés. Dependabot propose les mises à jour des SHA. Les installations `uv`
-dans les workflows et le script de démarrage utilisent `--no-build` : les builds de
-sources tierces sont refusés, tandis que le projet local reste installé en mode
-éditable. Une dépendance sans wheel nécessite une revue explicite.
-
-Vérifier l’état effectif, depuis une session `gh` de mainteneur authentifiée :
+La [politique de sécurité du dépôt](docs/repository-security.md) décrit les checks
+requis, les permissions et les paramètres maintenus. Pour une vérification en
+lecture seule depuis une session `gh` de mainteneur authentifiée :
 
 ```bash
 python3 scripts/verify_github_security.py
 ```
 
-Le script lit les API, ne modifie rien et échoue si une protection manque ou si son
-état est illisible. La politique du ruleset est versionnée dans
-[.github/rulesets/protect-main.json](.github/rulesets/protect-main.json).
-La [matrice de sécurité](docs/repository-security.md) précise les limites du plan
-public gratuit et le statut Sonar. Un signalement de vulnérabilité passe par
-[SECURITY.md](SECURITY.md), jamais par une issue publique.
-
-Le projet Sonar est `cblgn_storybook-ai`, organisation `cblgn`. Le secret Actions
-`SONAR_TOKEN` reste limité aux étapes Sonar sur `main`. Le workflow vérifie le mode
-d’analyse via l’API et désactive l’analyse automatique si nécessaire, puis vérifie
-qu’elle est effectivement désactivée avant tout scan CI. Cette migration utilise
-l’endpoint interne de l’interface Sonar : une erreur d’API ou de permission bloque
-le scan. La première migration nécessite un token autorisé à administrer le projet.
-
-Après configuration du secret, activer la variable `SONAR_ENABLED=true` et lancer
-`gh workflow run sonar.yml --ref main`. Le workflow produit les deux rapports de
-couverture et attend la Quality Gate. Toute erreur d’analyse ou de gate fait échouer
-le job. L’analyse CI reste limitée à `main`, sans activer de fonctionnalité payante.
-Les résultats effectifs sont consignés dans la documentation de sécurité.
-
-Pour les artefacts historiques à conserver pendant la transition, suivre la
-[note de migration temporaire](AGENTS.md#temporary-bootstrap-migration).
-
-Références : [liaison issue–PR](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue),
-[uv dans Actions](https://docs.astral.sh/uv/guides/integration/github/),
-[Code Security](https://docs.github.com/en/code-security/getting-started/quickstart-for-securing-your-repository),
-[SonarQube Cloud dans Actions](https://docs.sonarsource.com/sonarcloud/advanced-setup/ci-based-analysis/github-actions-for-sonarcloud).
+Un signalement de vulnérabilité suit [SECURITY.md](SECURITY.md), jamais une issue
+publique. Pour les agents, [AGENTS.md](AGENTS.md#skills) oriente vers les procédures
+d’implémentation et de durcissement ; ce guide reste le parcours des contributeurs.

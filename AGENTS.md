@@ -1,931 +1,191 @@
-# Storybook AI — Agent Instructions
+# Storybook AI — Agent instructions
 
-## Project purpose
+## Project
 
-Storybook AI is a small web application that generates personalized children's stories using an LLM.
+Storybook AI generates personalized children's stories with an LLM. It is both a
+usable web application and an experiment in agent-assisted development.
 
-The project has two goals:
+Keep the project small enough to understand and complete as a one-day MVP.
+Prefer simple, complete changes over speculative abstractions or infrastructure.
+Everything must work locally; cloud services and paid infrastructure are not
+required for the application. Keep backend and frontend in this one repository.
 
-1. build a usable AI-native web application;
-2. experiment with agentic software development using Codex.
+Use [README.md](README.md) for setup and [SPEC.md](SPEC.md) for product scope.
+Do not expand that scope merely because a framework or service is available.
 
-The project must remain small enough to understand and complete as a one-day MVP.
+## Sources of truth
 
----
+Use these sources in order:
 
-# Repository
+1. The current authorized user request.
+2. The relevant GitHub Issue, when one exists.
+3. [SPEC.md](SPEC.md).
+4. This `AGENTS.md`.
+5. [CONTRIBUTING.md](CONTRIBUTING.md).
+6. Existing code and tests.
 
-This project is maintained as a single Git repository.
+Each source has a distinct responsibility:
 
-The repository contains both backend and frontend code.
+- A GitHub Issue is the authoritative description of the current work item.
+- `SPEC.md` defines expected product behavior and functional requirements.
+- `AGENTS.md` defines permanent coding-agent rules and architectural invariants.
+- `CONTRIBUTING.md` describes the human contribution workflow and local commands.
+- A Pull Request contains the implementation and its review.
+- [ADRs](docs/adr/README.md) record significant architectural rationale only.
+- [SECURITY.md](SECURITY.md) defines private vulnerability reporting.
 
-Expected structure:
+Identify conflicts with the specification before implementation. An authorized
+product change must explicitly update the specification; do not silently treat
+an Issue or an existing implementation as a replacement specification.
 
-```text
-storybook-ai/
-├── .gitignore
-├── AGENTS.md
-├── SPEC.md
-├── README.md
-├── CONTRIBUTING.md
-├── .github/
-│   ├── ISSUE_TEMPLATE/
-│   ├── pull_request_template.md
-│   └── workflows/
-├── docs/
-│   └── adr/
-│
-├── backend/
-│   ├── pyproject.toml
-│   ├── src/
-│   └── tests/
-│
-└── frontend/
-    ├── package.json
-    ├── vite.config.ts
-    └── src/
-```
+Use GitHub Issues for work tracking; do not create Markdown task files.
 
-Do not create separate Git repositories for the frontend and backend.
+## Technology stack
 
----
+- Backend: Python 3.14+, uv, FastAPI, Pydantic v2 and PydanticAI.
+- Backend quality: pytest, pytest-cov, Ruff and mypy.
+- Frontend: React, TypeScript, Vite, Tailwind CSS, shadcn/ui and pnpm.
+- Frontend quality: ESLint, TypeScript, Vitest/Testing Library and Playwright.
 
-# Source of truth
+Read the manifests and lockfiles for exact versions. Do not introduce another
+backend, frontend or agent framework without an explicit requirement.
+Use lockfiles and preserve dependency build restrictions: uv's `--no-build`
+and pnpm's explicit build-script allowlist.
 
-Before implementing a change, use these sources in this order:
+## Architecture invariants
 
-1. the current user request;
-2. the relevant GitHub Issue, when one exists;
-3. `SPEC.md`;
-4. `AGENTS.md`;
-5. `CONTRIBUTING.md`;
-6. existing code and tests.
-
-`SPEC.md` is the versioned product specification: it defines product behavior and
-requirements.
-
-`AGENTS.md` defines stable development instructions for coding agents.
-
-GitHub Issues define individual units of work: implementation tasks, bugs, and
-enhancements. When an Issue exists, it is the authoritative task description.
-Pull Requests represent their implementation; normally one implementation Issue
-maps to one Pull Request.
-
-`README.md` introduces the project and explains local setup. `CONTRIBUTING.md`
-documents the human/GitHub contribution workflow. ADRs under `docs/adr/` record
-only significant architectural decisions, not ordinary tasks or progress reports.
-
-If an Issue conflicts with `SPEC.md`, identify the conflict before implementing it.
-Update the specification explicitly when an authorized change alters product
-requirements; do not silently treat an Issue as an amendment to the specification.
-
----
-
-# Technology stack
-
-## Backend
-
-* Python 3.14+
-* uv
-* FastAPI
-* Pydantic v2
-* PydanticAI
-* pytest
-* ruff
-* mypy
-
-## Frontend
-
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* shadcn/ui
-* pnpm
-
-Do not introduce an additional backend, frontend, or agent framework without an explicit requirement.
-
----
-
-# Development environment
-
-Everything must run locally.
-
-During development:
+Preserve this dependency direction:
 
 ```text
-React / Vite     http://localhost:5173
-FastAPI          http://localhost:8000
+React → HTTP API → FastAPI → application services → PydanticAI agents → provider
 ```
 
-The Vite frontend should proxy `/api` to FastAPI when practical.
-
-No cloud infrastructure is required.
-
----
-
-# Architecture
-
-Use the following dependency direction:
-
-```text
-Browser
-   ↓
-React / TypeScript
-   ↓
-HTTP API
-   ↓
-FastAPI
-   ↓
-Application services
-   ↓
-PydanticAI agents
-   ↓
-LLM provider
-```
-
-Business logic must not live in FastAPI route handlers.
-
-AI orchestration must not live in React components.
-
-PydanticAI agents must not depend on HTTP concepts.
-
----
-
-# Backend structure
-
-Prefer:
-
-```text
-backend/
-├── pyproject.toml
-├── src/
-│   └── storybook/
-│       ├── api/
-│       │   ├── app.py
-│       │   └── routes/
-│       │       └── stories.py
-│       │
-│       ├── domain/
-│       │   ├── requests.py
-│       │   └── stories.py
-│       │
-│       ├── agents/
-│       │   ├── planner.py
-│       │   ├── writer.py
-│       │   └── reviewer.py
-│       │
-│       ├── services/
-│       │   └── story_generator.py
-│       │
-│       └── settings.py
-│
-└── tests/
-```
-
-Avoid unnecessary layering.
-
-Do not introduce repositories, CQRS, event buses, plugin systems, or database abstractions for the MVP.
-
----
-
-# Frontend structure
-
-Prefer:
-
-```text
-frontend/
-├── package.json
-├── vite.config.ts
-└── src/
-    ├── components/
-    │   └── ui/
-    │
-    ├── features/
-    │   └── story/
-    │       ├── components/
-    │       ├── api.ts
-    │       └── types.ts
-    │
-    ├── lib/
-    │   └── api.ts
-    │
-    ├── App.tsx
-    └── main.tsx
-```
-
-Prefer feature-oriented organization.
-
-Use shadcn/ui primitives when suitable.
-
-Do not introduce global state management unless local React state becomes insufficient.
-
-Do not introduce Redux for the MVP.
-
----
-
-# Domain models
-
-Use explicit Pydantic models.
-
-Core concepts include:
-
-```text
-StoryRequest
-StoryPlan
-Character
-StoryScene
-StoryBook
-StoryReview
-```
-
-Prefer structured LLM outputs over parsing arbitrary text.
-
-The contract between the AI layer and the application should be typed.
-
----
-
-# AI workflow
-
-The target workflow is:
-
-```text
-StoryRequest
-     ↓
-Planner
-     ↓
-StoryPlan
-     ↓
-Writer
-     ↓
-StoryBook
-     ↓
-Reviewer
-     ↓
-StoryReview
-```
-
-If revision is necessary:
-
-```text
-StoryBook + StoryReview
-          ↓
-        Writer
-          ↓
- revised StoryBook
-```
-
-Automatic revision is limited to one iteration.
-
-Do not build uncontrolled agent loops.
-
----
-
-# PydanticAI
-
-Use PydanticAI as the application-level LLM framework.
-
-Agents should have:
-
-* one clear responsibility;
-* focused instructions;
-* typed outputs;
-* explicit dependencies when necessary.
-
-Do not introduce:
-
-* LangChain;
-* LangGraph;
-* CrewAI;
-* another agent orchestration framework.
-
-The LLM provider must be configurable.
-
-Prefer a Codex-compatible PydanticAI provider for local development when available.
-
-Never hardcode credentials.
-
-Never commit local authentication information.
-
----
-
-# Planner
-
-The planner converts the request into a structured story plan.
-
-It may determine:
-
-* story title;
-* characters;
-* setting;
-* premise;
-* challenge;
-* important events;
-* resolution;
-* emotional or educational theme.
-
-It must not write the complete story.
-
----
-
-# Writer
-
-The writer receives the request and story plan.
-
-It generates a complete structured `StoryBook`.
-
-The result must:
-
-* suit the requested age;
-* approximately match the requested duration;
-* preserve character consistency;
-* have a beginning, development, and ending;
-* respect the requested hero, setting, and theme;
-* avoid unnecessarily frightening content;
-* finish positively or reassuringly.
-
----
-
-# Reviewer
-
-The reviewer evaluates the generated story.
-
-It checks:
-
-* age appropriateness;
-* narrative coherence;
-* character consistency;
-* requested theme;
-* approximate duration;
-* frightening or disturbing content;
-* quality of the ending.
-
-It returns a structured `StoryReview`.
-
-It must not rewrite the story itself.
-
----
-
-# FastAPI
-
-Keep routes thin.
-
-Typical route:
-
-```python
-@router.post("/stories", response_model=StoryBook)
-async def create_story(
-    request: StoryRequest,
-    service: StoryGeneratorService = Depends(...),
-) -> StoryBook:
-    return await service.generate(request)
-```
-
-HTTP concerns remain at the API boundary.
-
-Do not pass FastAPI objects into the application or AI layers.
-
----
-
-# API
-
-The MVP exposes:
-
-```text
-POST /api/stories
-GET /api/health
-```
-
-Do not add CRUD APIs without a real requirement.
-
----
-
-# Frontend
-
-The frontend must be a real React application.
-
-Main workflow:
-
-```text
-story form
-   ↓
-generation
-   ↓
-story result
-```
-
-The UI must explicitly handle:
-
-* initial state;
-* invalid form state;
-* loading state;
-* success state;
-* error state.
-
-Prefer native React mechanisms:
-
-* `useState`;
-* `useReducer` when useful;
-* a small fetch wrapper.
-
----
-
-# Styling
-
-The application should feel:
-
-* warm;
-* playful;
-* modern;
-* polished;
-* readable.
-
-It should be suitable for parents and children without becoming visually cluttered.
-
-Use:
-
-* Tailwind CSS;
-* shadcn/ui;
-* responsive layouts;
-* readable typography;
-* generous spacing.
-
-Animations are optional.
-
-Visual polish must not block delivery of the end-to-end MVP.
-
----
-
-# Persistence
-
-Persistence is not required for the initial MVP.
-
-If added, prefer local JSON storage.
-
-Do not introduce:
-
-* PostgreSQL;
-* Redis;
-* cloud storage;
-* an ORM;
-
-unless explicitly requested later.
-
----
-
-# Security and credentials
-
-Never commit:
-
-* `.env`;
-* API keys;
-* access tokens;
-* Codex credentials;
-* authentication files;
-* secrets.
-
-Provide `.env.example` when configuration through environment variables is needed.
-
-`.env.example` must contain placeholders only.
-
----
-
-# Git workflow
-
-This project uses Git from its creation.
-
-## General rules
-
-Before making significant modifications:
-
-```bash
-git status
-```
-
-Inspect existing modifications before editing files.
-
-Do not overwrite unrelated user changes.
-
-Do not revert unrelated changes.
-
----
-
-## Branch
-
-The initial development branch is:
-
-```text
-main
-```
-
-Implementation work must use a dedicated feature branch and reach `main` through a pull request.
-
-Do not introduce a complex Git workflow.
-
----
-
-## Commits
-
-Commits should be:
-
-* small enough to understand;
-* logically coherent;
-* buildable when practical.
-
-Good examples:
-
-```text
-chore: bootstrap project structure
-feat: add story domain models
-feat: implement story writer agent
-feat: expose story generation API
-feat: add story creation form
-feat: add planner and reviewer workflow
-```
-
-Avoid commits mixing unrelated refactoring and features.
-
----
-
-## Agent commit behavior
-
-Do not automatically commit changes unless explicitly requested.
-
-When asked to commit:
-
-1. inspect `git status`;
-2. inspect the diff;
-3. run relevant quality checks;
-4. commit only relevant changes;
-5. use a concise descriptive commit message.
-
-Do not use:
-
-```text
-git add .
-```
-
-blindly when unrelated modifications exist.
-
-Do not:
-
-* force push;
-* rewrite history;
-* amend existing commits;
-* delete branches;
-
-unless explicitly requested.
-
----
-
-# .gitignore
-
-The repository must ignore at least:
-
-```gitignore
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Secrets
-.env
-.env.*
-!.env.example
-
-# Frontend
-frontend/node_modules/
-frontend/dist/
-
-# Application data
-data/
-
-# IDE
-.idea/
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-```
-
-Generated files should not be committed unless they are intentionally part of the repository.
-
----
-
-# Testing
-
-Backend tests should cover:
-
-* Pydantic model validation;
-* story generation orchestration;
-* planner/writer/reviewer interactions with mocked agents;
-* API happy path;
-* API validation errors.
-
-Default unit tests must not invoke a real LLM.
-
-Real-provider tests, if created, must be separated and explicitly invoked.
-
-Frontend testing should remain pragmatic.
-
-Prioritize:
-
-* form behavior;
-* API integration boundaries;
-* result rendering;
-
-only when useful.
-
-Do not spend a large portion of the MVP building an extensive frontend test suite.
-
----
-
-# Backend quality checks
-
-Before backend work is considered complete:
-
-```bash
-uv run pytest
-uv run pytest --cov=src/storybook --cov-report=term-missing --cov-report=xml
-uv run ruff check .
-uv run mypy src
-```
-
----
-
-# Frontend quality checks
-
-Before frontend work is considered complete:
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test:coverage
-pnpm build
-pnpm test:e2e
-```
-
-If frontend tests exist:
-
-```bash
-pnpm test
-```
-
----
-
-# Development workflow
-
-Follow `CONTRIBUTING.md`. For every change:
-
-1. Inspect `git status`, the current branch, history, and existing modifications.
-2. Read the relevant GitHub Issue and sections of `SPEC.md`.
-3. Inspect existing code and identify the smallest coherent implementation.
-4. Start a dedicated branch from an up-to-date `main`, preserving unrelated work.
-5. Implement the change and add or update meaningful tests where appropriate.
-6. Run the relevant local quality checks and locked dependency audits.
-7. Inspect `git status` again and review the complete diff before finishing,
-   including new files, even when no commit or PR is requested.
-8. Report the related Issue, changes, validation results, and remaining limitations.
-9. When publication is authorized, create the linked PR and verify the required
-   GitHub CI/security checks before proposing a merge.
-
-Do not rewrite unrelated code.
-
----
-
-# Temporary bootstrap migration
-
-`TASKS/001-bootstrap.md` and `TASKS/002-github-quality.md` are legacy bootstrap
-artifacts retained temporarily for GitHub migration. Preserve their contents until
-both tasks are represented by GitHub Issues and their Pull Requests have merged.
-Only then may a separate change remove `TASKS/`. Future work must originate in
-GitHub Issues; do not create new task files. GitHub assigns Issue and PR numbers
-from a shared sequence, so record the actual links rather than assuming numbers
-match the legacy task identifiers.
-
----
-
-# Simplicity rule
-
-This is initially a one-day MVP.
-
-Prefer:
-
-```text
-simple and complete
-```
-
-over:
-
-```text
-generic and unfinished
-```
-
-Avoid premature:
-
-* factories;
-* registries;
-* dependency injection frameworks;
-* event buses;
-* plugin systems;
-* microservices;
-* background queues;
-* elaborate DDD abstractions.
-
-Separation of concerns matters.
-
-Enterprise ceremony does not.
-
----
-
-# Out of scope
-
-Unless explicitly requested, do not implement:
-
-* authentication;
-* accounts;
-* payments;
-* AWS infrastructure;
-* cloud deployment;
-* Kubernetes;
-* Redis;
-* Celery;
-* database persistence;
-* image generation;
-* audio generation;
-* email;
-* social sharing.
-
----
-
-# Definition of done
-
-A change is complete when:
-
-* it satisfies the relevant Issue (or explicit user request) and `SPEC.md`;
-* code remains understandable;
-* relevant tests pass;
-* backend type/lint checks pass;
-* frontend build succeeds when affected;
-* the end-to-end workflow remains functional;
-* the Git diff contains no unrelated modifications;
-* no credentials or generated junk are committed.
-
-# GitHub development workflow
-
-The repository uses pull requests and automated quality gates.
-
-## Task and issue traceability
-
-Write GitHub Issue titles and bodies in English, including requirements,
-acceptance criteria, and technical notes. Agent-authored Issue updates must also
-be in English, even when the user conversation or application UI is in French.
-Preserve code identifiers and quoted UI text in their original language.
-
-Future implementation work starts from a GitHub Issue. Search existing Issues
-first and reuse the matching Issue; do not create duplicates. Respect explicit
-user limits on remote operations. If remote work is not authorized or GitHub is
-unavailable, continue authorized local work, prepare descriptions locally, and
-report the pending Issue/PR linkage rather than claiming it already exists.
-
-For each Issue:
-
-1. Use its objective, requirements, scope, and acceptance criteria as the task
-   description. Link relevant `SPEC.md` sections rather than copying the product
-   specification into the Issue.
-2. Record the Issue number in progress updates and keep implementation and
-   validation status accurate.
-3. Normally use one branch and one PR per implementation Issue. Include
-   `Closes #<issue>` in the PR description, with the reason for the change, its
-   scope, checks and results, limitations, and screenshots for UI changes.
-   Link the PR from the Issue as well. Explain any exception to the one-to-one
-   mapping in the Issue and PR.
-4. Prefer independent PRs targeting `main`. If a dependent PR must temporarily
-   target another feature branch, state that dependency explicitly. After the
-   prerequisite is squash merged, reconcile the dependent branch with `main`
-   without rewriting published history, retarget its PR, review the complete
-   diff, and rerun checks. Do not merge a dependent PR into the prerequisite
-   feature branch.
-5. Leave the Issue open while the PR awaits merge. Closing keywords
-   take effect when the PR targets and is merged into the default
-   branch; do not report a task as delivered to `main` before that happens.
-
-Issue tracking does not authorize automatic commits or merges. Follow the commit
-and merge authorization rules below. Record a significant architectural decision
-in an ADR only when needed; link it from the Issue and PR.
-
-## Branches and pull requests
-
-Direct feature development on `main` is not allowed.
-
-For implementation work, use a dedicated branch with a meaningful name, for example:
-
-```text
-feat/12-story-writer
-fix/18-story-duration
-ci/23-codeql
-docs/27-architecture
-```
-
-Use Conventional Commit-style commit messages:
-
-```text
-feat: add story writer agent
-fix: prevent duplicate story generation
-test: cover reviewer revision workflow
-ci: add dependency security checks
-chore: update dependencies
-docs: document local setup
-```
-
-Before proposing a pull request:
-
-1. inspect `git status`;
-2. review the complete diff;
-3. run all relevant backend checks;
-4. run all relevant frontend checks;
-5. ensure no credentials or generated files are included;
-6. verify the application still builds;
-7. summarize both the reason for the change and the implementation.
-
-A pull request description must explain **why** the change exists, not merely repeat the Git diff.
-
-For visible frontend changes, include a screenshot in the pull request when possible.
-
-Do not merge a pull request without explicit user authorization.
-
-When a merge is authorized, use squash merge into `main` after the required checks
-and review pass. The squash commit message must follow Conventional Commits.
-Use GitHub's automatic deletion of merged head branches when configured; do not
-manually delete branches without authorization. Document repository settings in
-`CONTRIBUTING.md`; documentation alone does not configure GitHub.
-
-Do not push directly to `main`.
-
-Do not bypass failing GitHub checks.
-
-Do not weaken tests, linting, type checking, coverage requirements, security checks, branch protections, or quality gates merely to make a change pass.
-
-If a quality check exposes a legitimate defect, fix the defect.
-
-If a check itself is incorrect or inappropriate, explain why before changing its configuration.
-
-Do not automatically commit unless the task explicitly asks for commits.
-
-When commits are explicitly requested:
-
-* keep commits logically coherent;
-* do not include unrelated files;
-* use clear Conventional Commit messages;
-* never rewrite published history unless explicitly requested.
-
-Dependency updates should normally be handled through Dependabot pull requests.
-
-Automated tests must not call a real LLM unless they are explicitly marked as integration tests.
-
-Normal CI must remain deterministic and must not require Codex, OpenAI, or other LLM credentials.
-
-Backend coverage must remain at least 80%. Keep the default exclusion of real-provider
-`integration` tests and the test guards that prohibit real model requests.
-
-Run the locked dependency audits described in `CONTRIBUTING.md`. High and critical
-vulnerabilities must fail CI; the backend audit fails on all known vulnerabilities.
-
-Inspect Git status and the complete task diff before finishing any implementation,
-even when no commit or pull request is requested.
-
-## Repository hardening policy
-
-The active `Protect main` ruleset and repository security settings are intentional.
-Do not bypass them, add bypass actors, remove required checks, lower alert thresholds,
-or disable security features to unblock a change. A missing or unreadable protection
-is a failed verification, not evidence that the repository is safe.
-
-All remote Actions in `.github/workflows/` must use verified full 40-character
-commit SHAs with human-readable release comments. Dependabot maintains these pins.
-New Actions need a concrete justification; prefer GitHub-owned actions or the
-existing official vendors. Repository policy restricts allowed vendors and requires
-SHA pinning. Keep checkout credentials disabled and grant extra token permissions
-only to the job that needs them. Never execute PR code with `pull_request_target`.
-
-Default Actions tokens are read-only and cannot approve reviews. Normal tests must
-not depend on LLM credentials. Install locked dependencies with `uv --no-build`
-where supported to reject source-distribution builds; the reviewed local project
-still installs in editable mode. Do not silently remove this restriction if a wheel
-is unavailable. Keep pnpm's build-script allowlist small and justified.
-
-Fix security findings rather than suppressing them without documented justification.
-Use private vulnerability reporting for sensitive findings; never print secret
-values. Dependabot remains the preferred mechanism for dependency updates.
-
-After authorized repository-setting changes, run `python3 scripts/verify_github_security.py`
-with an authenticated maintainer `gh` session. This reads the effective API state,
-compares it with the versioned policy and fails closed on drift or unreadable data.
-Do not claim settings are enforced based only on successful write commands.
-Sonar authentication/quality-gate status is a separate external check; the GitHub
-verifier does not claim to validate Sonar. Never enable Sonar CI without its secret
-and the existing project's automatic analysis being disabled to avoid duplicate scans.
+React owns presentation and interaction state, not AI orchestration.
+FastAPI owns HTTP concerns, not business logic. Keep route handlers thin.
+Application services orchestrate use cases without depending on HTTP objects.
+PydanticAI agents must remain independent of FastAPI and HTTP concepts.
+Use explicit Pydantic models and typed structured outputs at AI boundaries.
+
+Prefer feature-oriented frontend organization and existing shadcn/ui primitives.
+Use native React state and a small fetch boundary; add broader state management
+only when local state is demonstrably insufficient. Do not introduce Redux for
+the MVP.
+
+Keep layering proportionate to the problem. Do not add speculative repositories,
+CQRS, event buses, registries, dependency-injection frameworks, microservices,
+background queues, plugin systems or database abstractions.
+Storage and infrastructure choices must follow the scope in `SPEC.md`.
+
+## PydanticAI and LLM invariants
+
+PydanticAI is the application's LLM framework. Do not add LangChain, LangGraph,
+CrewAI or another orchestration framework without an explicit requirement.
+
+Give each agent a focused responsibility, clear instructions and typed outputs.
+Prefer structured results over parsing arbitrary generated text. Declare
+explicit dependencies when needed; keep provider selection configurable.
+Prefer the existing Codex-compatible PydanticAI provider for local development
+when available. Never hardcode or copy credentials into the repository.
+
+Planner, Writer, Reviewer, story models and revision behavior are specified in
+`SPEC.md`; do not redefine them here or build uncontrolled agent loops.
+
+Normal tests and CI must be deterministic and must not call a real LLM or require
+Codex, OpenAI or other provider credentials. Keep the test guards prohibiting real
+model requests. Use mocks or PydanticAI test models at the appropriate boundary.
+Real-provider tests remain explicitly opt-in, marked `integration`, and excluded
+from the default suite and required PR validation.
+
+## Testing and quality invariants
+
+Run the relevant checks for the affected components. The exact local commands
+and locked dependency audits live in [CONTRIBUTING.md](CONTRIBUTING.md#vérifications-locales).
+
+- Backend: Ruff, mypy, pytest and coverage; coverage must remain at least **80%**.
+- Frontend: ESLint, TypeScript checking, Vitest coverage, production build and
+  browser integration tests when affected.
+- Dependencies: audit the locked runtime and development dependencies. The
+  backend audit fails on all known vulnerabilities; frontend high/critical
+  findings fail its audit.
+
+Tests should check behavior and useful failure boundaries: model validation,
+service orchestration, API success/errors, form behavior and story rendering.
+Avoid meaningless tests added only to improve a coverage number. Keep frontend
+testing proportionate to the MVP; do not invent an arbitrary coverage threshold.
+
+Never weaken tests, linting, typing, coverage, security checks or Quality Gates
+merely to obtain a passing build. Fix legitimate defects. If a check itself is
+incorrect, explain the evidence before proposing its correction.
+
+For documentation-only changes, validate links, skill metadata and the complete
+diff; state which application checks are not relevant. Required remote checks
+still apply to the PR.
+
+## Git and GitHub invariants
+
+Inspect `git status`, the branch and existing modifications before significant
+work. Preserve unrelated user changes; do not overwrite or revert them.
+
+Non-trivial work uses a GitHub Issue and a dedicated branch with its Issue number.
+Normally one implementation Issue maps to one PR. Write Issue titles, bodies and
+updates in English. Keep code identifiers and quoted UI text in their language.
+
+Do not develop features or push directly on `main`. Use Conventional Commits.
+Commit and publish only when the user's task authorizes those actions; respect
+any explicit limits on remote operations and reuse authorization already given.
+
+Never merge a PR without explicit user authorization. Authorized merges use
+squash after required checks and review. The existing Dependabot automation is a
+separate approved policy; it does not authorize an agent to merge other PRs.
+
+Do not force-push, rewrite published history, amend commits or manually delete
+branches without authorization. Preserve the intentional branch/ruleset
+protections; never add bypasses or remove required checks to unblock a merge.
+
+Inspect `git status` and the complete task diff, including new files, before
+committing and before finishing. Stage only relevant files. Do not claim a PR is
+merged or an Issue delivered while it is still awaiting review.
+
+## Security invariants
+
+Never commit or expose secrets, API keys, tokens, local authentication files or
+real `.env` contents. Keep `.env.example` values as placeholders only.
+The actual [.gitignore](.gitignore) is authoritative for ignored files; keep
+credentials, caches, generated builds, coverage and local application data out of
+Git. Only intentional repository skill files belong under the tracked `.codex` paths.
+
+Security controls are intentional. Never disable features, weaken protection or
+suppress findings to make checks pass. Fix findings or document a justified review.
+Use `SECURITY.md` for sensitive reports; do not publish exploit details or secrets.
+
+Respect the repository's verified full-SHA Action pinning and approved-vendor
+policy. New Actions need a concrete justification and least-privilege permissions.
+Normal dependency updates should use Dependabot.
+
+The maintained security baseline is [docs/repository-security.md](docs/repository-security.md).
+A successful configuration write is not proof of effective protection. Missing
+or unreadable protection state must fail closed.
+
+## Skills
+
+For non-trivial feature, bug-fix, refactoring, significant documentation, normal
+CI/CD or implementation work, read and use
+[implement-github-issue](.codex/skills/implement-github-issue/SKILL.md).
+
+For repository security, GitHub configuration, Sonar, Actions security, rulesets
+or repository hardening work, also read and use
+[harden-repository](.codex/skills/harden-repository/SKILL.md).
+Do not load the hardening procedure for every normal feature.
+
+These are repository-local skill entrypoints. Follow their links when the task
+matches; load detailed procedures only when relevant. Skills do not grant extra
+permissions or override the current authorized request.
+
+## Definition of done
+
+- The authorized work item and applicable specification are satisfied.
+- The change remains understandable and contains no unrelated modifications.
+- Relevant local checks and required PR checks pass; limitations are explicit.
+- The full diff contains no secrets, generated junk or weakened protections.
+- Documentation and the Issue/PR accurately describe the outcome and validation.
+- A PR awaiting maintainer review remains unmerged until explicitly authorized.

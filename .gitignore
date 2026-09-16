@@ -17,7 +17,16 @@ coverage/
 .env
 .env.*
 !.env.example
-.codex/
+# Version only the two shared skills; keep all other Codex state private.
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/implement-github-issue/
+!.codex/skills/harden-repository/
+.codex/skills/implement-github-issue/*
+!.codex/skills/implement-github-issue/SKILL.md
+.codex/skills/harden-repository/*
+!.codex/skills/harden-repository/SKILL.md
 .agents/
 auth.json
 
