@@ -22,8 +22,9 @@ coverage/
 auth.json
 
 # Frontend
-frontend/node_modules/
-frontend/dist/
+node_modules/
+dist/
+build/
 *.tsbuildinfo
 frontend/test-results/
 frontend/playwright-report/
@@ -36,3 +37,9 @@ data/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Additional local tooling and authentication
+.npm/
+.pnpm-store/
+.uv-cache/
+sonar-token.txt
