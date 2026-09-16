@@ -33,6 +33,9 @@ jobs:
       - run: uv sync --locked --no-build
       - run: uv run --no-sync --no-build ruff check .
       - run: uv run --no-sync --no-build mypy src
+      - name: Verify fail-closed Sonar migration
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+        working-directory: .
       - run: uv run --no-sync --no-build pytest --cov=src/storybook --cov-report=term-missing --cov-report=xml
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

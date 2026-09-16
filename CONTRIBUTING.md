@@ -164,14 +164,18 @@ La [matrice de sécurité](docs/repository-security.md) précise les limites du 
 public gratuit et le statut Sonar. Un signalement de vulnérabilité passe par
 [SECURITY.md](SECURITY.md), jamais par une issue publique.
 
-Le projet Sonar existant est `cblgn_storybook-ai`, organisation `cblgn`. La configuration
-couvre les deux applications et leurs rapports de couverture. Aucune authentification
-Sonar n’est actuellement disponible pour la CI. Une fois cette authentification
-fournie, désactiver l’analyse automatique du projet via l’API Sonar authentifiée,
-installer le secret Actions `SONAR_TOKEN` sans l’afficher, puis activer
-`SONAR_ENABLED=true`. Le workflow `sonar.yml` peut alors être lancé sur `main` par
-`gh workflow run sonar.yml --ref main` et attend le Quality Gate. L’analyse des PR
-et des branches secondaires n’est pas exigée sur le plan Sonar gratuit.
+Le projet Sonar est `cblgn_storybook-ai`, organisation `cblgn`. Le secret Actions
+`SONAR_TOKEN` reste limité aux étapes Sonar sur `main`. Le workflow vérifie le mode
+d’analyse via l’API et désactive l’analyse automatique si nécessaire, puis vérifie
+qu’elle est effectivement désactivée avant tout scan CI. Cette migration utilise
+l’endpoint interne de l’interface Sonar : une erreur d’API ou de permission bloque
+le scan. La première migration nécessite un token autorisé à administrer le projet.
+
+Après configuration du secret, activer la variable `SONAR_ENABLED=true` et lancer
+`gh workflow run sonar.yml --ref main`. Le workflow produit les deux rapports de
+couverture et attend la Quality Gate. Toute erreur d’analyse ou de gate fait échouer
+le job. L’analyse CI reste limitée à `main`, sans activer de fonctionnalité payante.
+Les résultats effectifs sont consignés dans la documentation de sécurité.
 
 Pour les artefacts historiques à conserver pendant la transition, suivre la
 [note de migration temporaire](AGENTS.md#temporary-bootstrap-migration).

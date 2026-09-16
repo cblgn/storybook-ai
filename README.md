@@ -25,7 +25,9 @@ secrets et la protection au push complètent ces contrôles. Les Actions sont
 épinglées à des SHA complets, avec des permissions minimales.
 
 Le [projet SonarQube Cloud](https://sonarcloud.io/dashboard?id=cblgn_storybook-ai)
-existe ; son analyse CI avec couverture attend encore l’authentification Sonar.
+utilise un workflow CI dédié à `main`, avec les rapports de couverture Python et
+TypeScript et une vérification bloquante de la Quality Gate. L’activation et son
+statut effectif sont décrits dans la documentation de sécurité.
 Aucun badge Sonar ou de couverture n’est affiché avant que ces indicateurs soient
 exploitables. Voir la [politique de sécurité](SECURITY.md) pour un signalement privé
 et la [vérification des protections](docs/repository-security.md).
