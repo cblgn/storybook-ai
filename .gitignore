@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+coverage/
+.scannerwork/
+
+# Secrets and local agent configuration
+.env
+.env.*
+!.env.example
+.codex/
+.agents/
+auth.json
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+
+# Application data
+data/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

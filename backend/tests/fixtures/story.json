@@ -1,0 +1,12 @@
+{
+  "title": "Zéphyr et la lumière des bois",
+  "synopsis": "Un petit dragon découvre le courage avec son amie Léa.",
+  "characters": [
+    {"name": "Zéphyr", "description": "Un petit dragon bleu", "personality": ["timide", "gentil"]}
+  ],
+  "scenes": [
+    {"title": "Le premier pas", "text": "Dans la forêt enchantée, Zéphyr rencontra Léa. Ensemble, ils suivirent une petite lumière."},
+    {"title": "Une belle découverte", "text": "La lumière venait d'une luciole perdue. Zéphyr lui montra le chemin et découvrit qu'il pouvait aider ses amis."}
+  ],
+  "closing_sentence": "Ce soir-là, Zéphyr s'endormit paisiblement, fier de son petit pas courageux."
+}
