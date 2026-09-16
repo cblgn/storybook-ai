@@ -897,3 +897,35 @@ vulnerabilities must fail CI; the backend audit fails on all known vulnerabiliti
 
 Inspect Git status and the complete task diff before finishing any implementation,
 even when no commit or pull request is requested.
+
+## Repository hardening policy
+
+The active `Protect main` ruleset and repository security settings are intentional.
+Do not bypass them, add bypass actors, remove required checks, lower alert thresholds,
+or disable security features to unblock a change. A missing or unreadable protection
+is a failed verification, not evidence that the repository is safe.
+
+All remote Actions in `.github/workflows/` must use verified full 40-character
+commit SHAs with human-readable release comments. Dependabot maintains these pins.
+New Actions need a concrete justification; prefer GitHub-owned actions or the
+existing official vendors. Repository policy restricts allowed vendors and requires
+SHA pinning. Keep checkout credentials disabled and grant extra token permissions
+only to the job that needs them. Never execute PR code with `pull_request_target`.
+
+Default Actions tokens are read-only and cannot approve reviews. Normal tests must
+not depend on LLM credentials. Install locked dependencies with `uv --no-build`
+where supported to reject source-distribution builds; the reviewed local project
+still installs in editable mode. Do not silently remove this restriction if a wheel
+is unavailable. Keep pnpm's build-script allowlist small and justified.
+
+Fix security findings rather than suppressing them without documented justification.
+Use private vulnerability reporting for sensitive findings; never print secret
+values. Dependabot remains the preferred mechanism for dependency updates.
+
+After authorized repository-setting changes, run `python3 scripts/verify_github_security.py`
+with an authenticated maintainer `gh` session. This reads the effective API state,
+compares it with the versioned policy and fails closed on drift or unreadable data.
+Do not claim settings are enforced based only on successful write commands.
+Sonar authentication/quality-gate status is a separate external check; the GitHub
+verifier does not claim to validate Sonar. Never enable Sonar CI without its secret
+and the existing project's automatic analysis being disabled to avoid duplicate scans.

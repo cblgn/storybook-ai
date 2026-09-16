@@ -1,5 +1,12 @@
 # Storybook AI
 
+[![CI](https://github.com/cblgn/storybook-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/cblgn/storybook-ai/actions/workflows/ci.yml)
+[![Security](https://github.com/cblgn/storybook-ai/actions/workflows/security.yml/badge.svg?branch=main)](https://github.com/cblgn/storybook-ai/actions/workflows/security.yml)
+[![CodeQL](https://github.com/cblgn/storybook-ai/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/cblgn/storybook-ai/actions/workflows/codeql.yml)
+
+[![Sonar Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=cblgn_storybook-ai&metric=alert_status)](https://sonarcloud.io/dashboard?id=cblgn_storybook-ai)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=cblgn_storybook-ai&metric=coverage)](https://sonarcloud.io/component_measures?id=cblgn_storybook-ai&metric=coverage)
+
 Des histoires du soir personnalisées, en français. Monorepo local : React → FastAPI
 → service de génération → Writer PydanticAI → histoire structurée.
 
@@ -11,6 +18,21 @@ Pour contribuer, suivre [CONTRIBUTING.md](CONTRIBUTING.md) : une issue GitHub
 décrit le travail, une PR en porte l’implémentation. Les instructions des agents
 sont dans [AGENTS.md](AGENTS.md) ; les décisions d’architecture significatives
 se documentent dans [docs/adr/](docs/adr/README.md).
+
+## Qualité et sécurité
+
+`main` est protégé : PR obligatoire, checks réussis, branche à jour et squash merge.
+La CI reste déterministe, sans appel LLM : lint, typage, tests, build et couverture
+backend minimale de 80 %. Les audits de dépendances, CodeQL, Dependabot, le scan de
+secrets et la protection au push complètent ces contrôles. Les Actions sont
+épinglées à des SHA complets, avec des permissions minimales.
+
+Le [projet SonarQube Cloud](https://sonarcloud.io/dashboard?id=cblgn_storybook-ai)
+utilise un workflow CI dédié à `main`, avec les rapports de couverture Python et
+TypeScript et une vérification bloquante de la Quality Gate. L’activation et son
+statut effectif sont décrits dans la documentation de sécurité.
+Voir la [politique de sécurité](SECURITY.md) pour un signalement privé
+et la [vérification des protections](docs/repository-security.md).
 
 ## Prérequis
 

@@ -130,26 +130,52 @@ Les workflows existants utilisent Python 3.14, Node.js 24, pnpm et les lockfiles
 - Dependabot : uv, npm/pnpm et Actions chaque semaine ; groupes mineurs/correctifs,
   mises à jour majeures séparées.
 
-Les réglages suivants sont une procédure d’administration, pas une déclaration
-qu’ils sont déjà activés. Les fichiers du dépôt ne configurent pas GitHub à eux seuls.
+Le ruleset **Protect main** est actif, sans acteur de contournement : PR obligatoire,
+branche à jour, conversations résolues, historique linéaire, force pushes et suppression
+interdits. Zéro approbation est obligatoire pour permettre la maintenance en solo.
+Les checks requis sont `Backend quality`, `Frontend quality`, `Browser integration`,
+`Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` et
+`CodeQL (javascript-typescript)`, provenant de GitHub Actions. Une règle CodeQL
+supplémentaire bloque les alertes, y compris lorsqu’un job d’analyse a réussi.
 
-1. Dans **Settings → General → Pull Requests**, autoriser **squash merging**,
-   désactiver les autres méthodes de fusion et activer **Automatically delete head
-   branches**. Cela supprime la branche après fusion, sans autoriser d’auto-merge.
-2. Protéger `main` : PR obligatoire, branche à jour, force pushes et suppression
-   interdits ; exiger `Backend quality`, `Frontend quality`, `Browser integration`,
-   `Backend dependency audit` et `Frontend dependency audit`. Ajouter
-   `CodeQL (python)` et `CodeQL (javascript-typescript)` lorsque disponibles.
-   Les noms deviennent visibles après une première exécution des workflows.
-   Lors de l’initialisation, planifier l’activation des checks avec l’arrivée des
-   workflows ; ne jamais désactiver une protection existante pour fusionner.
-3. Activer les alertes et mises à jour de sécurité Dependabot. Conserver CodeQL
-   en configuration avancée, sans activer en parallèle la configuration par défaut.
-4. Importer le dépôt dans SonarQube Cloud et désactiver l’analyse automatique au
-   profit de la CI. Remplacer les identifiants publics dans `sonar-project.properties`,
-   ajouter le secret Actions `SONAR_TOKEN`, puis la variable `SONAR_ENABLED=true`.
-   Garder l’analyse gratuite sur `main` après fusion, sans check Sonar obligatoire
-   pour les PR. Ne jamais inscrire un jeton dans une issue ou dans Git.
+Le dépôt autorise uniquement le squash merge, supprime automatiquement les branches
+fusionnées et permet l’auto-merge. Son activation pour une PR nécessite l’autorisation
+explicite du mainteneur et le respect de toutes les protections. Aucun auto-merge
+général des PR Dependabot n’est configuré.
+
+Les tokens Actions sont en lecture seule par défaut et ne peuvent pas approuver de
+PR. Les Actions distantes doivent être épinglées à un SHA complet avec un commentaire
+de version ; GitHub et les fournisseurs officiels explicitement autorisés peuvent
+être utilisés. Dependabot propose les mises à jour des SHA. Les installations `uv`
+dans les workflows et le script de démarrage utilisent `--no-build` : les builds de
+sources tierces sont refusés, tandis que le projet local reste installé en mode
+éditable. Une dépendance sans wheel nécessite une revue explicite.
+
+Vérifier l’état effectif, depuis une session `gh` de mainteneur authentifiée :
+
+```bash
+python3 scripts/verify_github_security.py
+```
+
+Le script lit les API, ne modifie rien et échoue si une protection manque ou si son
+état est illisible. La politique du ruleset est versionnée dans
+[.github/rulesets/protect-main.json](.github/rulesets/protect-main.json).
+La [matrice de sécurité](docs/repository-security.md) précise les limites du plan
+public gratuit et le statut Sonar. Un signalement de vulnérabilité passe par
+[SECURITY.md](SECURITY.md), jamais par une issue publique.
+
+Le projet Sonar est `cblgn_storybook-ai`, organisation `cblgn`. Le secret Actions
+`SONAR_TOKEN` reste limité aux étapes Sonar sur `main`. Le workflow vérifie le mode
+d’analyse via l’API et désactive l’analyse automatique si nécessaire, puis vérifie
+qu’elle est effectivement désactivée avant tout scan CI. Cette migration utilise
+l’endpoint interne de l’interface Sonar : une erreur d’API ou de permission bloque
+le scan. La première migration nécessite un token autorisé à administrer le projet.
+
+Après configuration du secret, activer la variable `SONAR_ENABLED=true` et lancer
+`gh workflow run sonar.yml --ref main`. Le workflow produit les deux rapports de
+couverture et attend la Quality Gate. Toute erreur d’analyse ou de gate fait échouer
+le job. L’analyse CI reste limitée à `main`, sans activer de fonctionnalité payante.
+Les résultats effectifs sont consignés dans la documentation de sécurité.
 
 Pour les artefacts historiques à conserver pendant la transition, suivre la
 [note de migration temporaire](AGENTS.md#temporary-bootstrap-migration).

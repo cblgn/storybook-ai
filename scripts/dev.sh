@@ -38,7 +38,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 cd "$project_dir/backend"
-uv sync --locked &
+uv sync --locked --no-build &
 process_ids+=("$!")
 wait "$!"
 
@@ -57,7 +57,7 @@ echo "Application : http://localhost:5173 — API : http://localhost:8000"
 echo "Ctrl+C arrête les deux serveurs."
 
 cd "$project_dir/backend"
-uv run --locked uvicorn storybook.api.app:app --reload --host 127.0.0.1 --port 8000 \
+uv run --locked --no-build uvicorn storybook.api.app:app --reload --host 127.0.0.1 --port 8000 \
   --timeout-graceful-shutdown 5 "${backend_options[@]}" &
 process_ids+=("$!")
 
