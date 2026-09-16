@@ -245,6 +245,9 @@ The primary action is:
 Créer l'histoire
 ```
 
+The interface explicitly handles initial, invalid-form, loading, success and error
+states. Loading, result display and error presentation are detailed below.
+
 Submitting the form triggers the backend AI workflow.
 
 The user must not be able to accidentally submit the same generation multiple times while a request is already running.
@@ -351,7 +354,10 @@ Stories must:
 
 A reviewer evaluates the generated `StoryBook`.
 
-It produces a typed `StoryReview`.
+It produces a typed `StoryReview`. It evaluates age appropriateness, narrative
+coherence, character consistency, the requested theme, approximate reading
+duration, frightening or disturbing content, and the quality of the ending.
+The reviewer evaluates the story; it does not rewrite it.
 
 Conceptually:
 
@@ -539,7 +545,10 @@ Use:
 * Tailwind CSS;
 * shadcn/ui.
 
-The application must be responsive.
+The application must be responsive. Its visual design should be warm, playful,
+modern, polished and readable for parents and children without visual clutter.
+Use readable typography and generous spacing. Animations are optional; visual
+polish must not delay the working end-to-end MVP.
 
 No server-side rendering is necessary.
 
@@ -677,7 +686,10 @@ implement those Issues. Normally one implementation Issue maps to one PR.
 Issues link relevant specification sections without duplicating them.
 
 ADRs under `docs/adr/` document only significant architectural decisions.
-See the temporary bootstrap migration note in `AGENTS.md` for legacy artifacts.
+Detailed reusable agent procedures are routed from [AGENTS.md](AGENTS.md#skills):
+work-item refinement, implementation, PR preparation, significant architecture
+review and repository hardening.
+[SECURITY.md](SECURITY.md) defines vulnerability reporting.
 
 ---
 

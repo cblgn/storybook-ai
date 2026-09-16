@@ -17,7 +17,25 @@ coverage/
 .env
 .env.*
 !.env.example
-.codex/
+# Version only the approved skill entrypoints; keep other Codex state private.
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/refine-work-item/
+!.codex/skills/implement-issue/
+!.codex/skills/prepare-pull-request/
+!.codex/skills/senior-architecture-review/
+!.codex/skills/harden-repository/
+.codex/skills/refine-work-item/*
+!.codex/skills/refine-work-item/SKILL.md
+.codex/skills/implement-issue/*
+!.codex/skills/implement-issue/SKILL.md
+.codex/skills/prepare-pull-request/*
+!.codex/skills/prepare-pull-request/SKILL.md
+.codex/skills/senior-architecture-review/*
+!.codex/skills/senior-architecture-review/SKILL.md
+.codex/skills/harden-repository/*
+!.codex/skills/harden-repository/SKILL.md
 .agents/
 auth.json
 
