@@ -22,7 +22,7 @@ proof of repository enforcement.
 | Python and JS/TS CodeQL | Advanced workflow; default setup not configured | Required jobs and CodeQL rule blocking all alert severities | Merge | Free public repository |
 | Dependency audits | pip-audit rejects all known vulnerabilities; pnpm rejects high/critical | Required Security workflow | Merge | Free |
 | Deterministic quality and coverage | Backend threshold 80%; frontend reports coverage without arbitrary threshold | Required CI workflow | Merge | Free |
-| Sonar analysis with coverage | Project exists; CI authentication unavailable; Quality Gate not computed | Prepared main-only workflow, conditional until credentials exist | Not a PR gate; activation incomplete | Free main analysis; other branches/PRs excluded |
+| Sonar analysis with coverage | Automatic PR #12 Quality Gate OK, no open findings; CI coverage authentication unavailable | Existing Sonar app; prepared main-only workflow | Advisory PR check; CI activation incomplete | Existing public automatic PR analysis works; CI limited to main |
 
 Required check names: `Backend quality`, `Frontend quality`, `Browser integration`,
 `Backend dependency audit`, `Frontend dependency audit`, `CodeQL (python)` and
@@ -60,7 +60,10 @@ The existing public project is `cblgn_storybook-ai` in organization `cblgn`.
 reports into that single project. Generated files and caches are excluded. The
 public automatic analysis initially reported 18 Actions/install security findings;
 this PR pins Actions and adds uv's no-build option to address their source causes.
-Only a subsequent Sonar analysis can confirm those findings are closed.
+The existing Sonar app subsequently analyzed PR #12: Quality Gate OK, no open
+findings, A ratings on new-code security/reliability/maintainability, and no new
+duplication. Coverage is still unavailable to that automatic analysis. Main results
+remain separate until analysis of the merged commit.
 
 No SONAR_TOKEN Actions secret, authenticated Sonar CLI or Sonar token environment
 is available. GitHub authentication cannot administer the Sonar account. Once Sonar
@@ -70,7 +73,9 @@ then set `SONAR_ENABLED=true` and dispatch `sonar.yml` on main. The workflow wai
 for the Quality Gate and fails if analysis or the gate fails. The ref guard prevents
 manual execution on a feature branch with this secret.
 
-Sonar PR/secondary-branch analysis is not required by this free-plan setup. Sonar
+The existing public Sonar app provides automatic PR analysis at no added charge
+from this task. No additional branch/PR entitlement or paid plan was enabled. The
+prepared CI pipeline remains main-only; automatic and CI analysis must not overlap. Sonar
 badges are intentionally absent until the gate and coverage provide real signals.
 A successful GitHub API verification does **not** mean Sonar activation is complete.
 
