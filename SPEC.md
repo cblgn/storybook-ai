@@ -566,6 +566,16 @@ Use:
 
 The LLM provider must remain configurable.
 
+The default local Writer uses `qwen3.5:0.8b` served by Ollama through its
+OpenAI-compatible API. Story generation requires no paid API or cloud account
+with this configuration; after downloading the runtime and model, inference
+runs locally on CPU. The endpoint and model remain configurable.
+Use schema-constrained generation and validate the resulting `StoryBook`.
+Keep generation deadlines and retries bounded; an unavailable local model must
+produce the existing recoverable error, never an automatic cloud fallback.
+This small model is an initial baseline, not a guarantee of narrative quality
+or precise reading duration. It does not change the story requirements above.
+
 Credentials must stay outside Git.
 
 ---
