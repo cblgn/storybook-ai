@@ -39,13 +39,15 @@ et la [vérification des protections](docs/repository-security.md).
 - Python **3.14+** et [uv](https://docs.astral.sh/uv/).
 - Node.js 24.15+ sur la branche 24 (utilisée en CI), ou 22.22.2+ sur la branche 22,
   ou 26+, et pnpm 10.34.5. Ces minimums incluent les exigences de jsdom.
-- Un fournisseur LLM configuré pour générer de vraies histoires.
+- [Ollama](https://ollama.com/download) récent et le modèle `qwen3.5:0.8b`
+  pour générer localement, sans clé API (voir ci-dessous).
 
 Si pnpm n’est pas installé : `npm install --global pnpm@10.34.5`.
 
 ## Démarrage local
 
-Depuis la racine, une seule commande lance l’application complète en développement :
+Après avoir démarré Ollama et téléchargé le modèle (section suivante), lancer
+FastAPI et React depuis la racine :
 
 ```bash
 ./scripts/dev.sh
@@ -76,17 +78,43 @@ pnpm dev
 
 Ouvrir **http://localhost:5173**. Vite transmet `/api` à FastAPI sur le port 8000.
 La page affiche « Service connecté » lorsque `/api/health` répond. Ce contrôle
-vérifie le serveur, pas l’authentification du fournisseur LLM.
+vérifie FastAPI, pas la disponibilité d’Ollama ou du modèle.
 
 ## Fournisseur LLM
 
-Par défaut, le Writer utilise `openai-codex:gpt-5.6-luna` via le fournisseur natif
-[PydanticAI Codex](https://pydantic.dev/docs/ai/models/openai-codex/).
-Il utilise l’authentification locale existante de Codex ; celle-ci reste hors du
-projet. Aucune clé ni aucun fichier d’authentification ne doit être copié ici.
+Par défaut, le Writer utilise **Qwen3.5 0.8B dans Ollama**, via l’API compatible
+OpenAI sur `http://127.0.0.1:11434/v1`. PydanticAI transmet le schéma JSON et valide
+le `StoryBook` retourné. Le raisonnement est désactivé pour limiter la latence.
+La génération tourne sur CPU, sans clé API, abonnement ou repli cloud.
+
+Installer Ollama depuis sa [documentation officielle](https://docs.ollama.com/linux),
+puis lancer le serveur dans un terminal dédié (Linux/WSL) :
+
+```bash
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_NO_CLOUD=1 \
+  OLLAMA_CONTEXT_LENGTH=8192 OLLAMA_NUM_PARALLEL=1 ollama serve
+```
+
+Si Ollama tourne déjà comme service, lui appliquer ces variables et le redémarrer
+plutôt que lancer un second serveur. Garder l’API sur l’interface locale.
+Dans un autre terminal, télécharger le modèle une fois, puis lancer l’application :
+
+```bash
+ollama pull qwen3.5:0.8b
+./scripts/dev.sh
+```
+
+Le modèle occupe environ 1 Go sur disque, en plus du runtime et de la mémoire
+nécessaire à l’inférence. Les téléchargements nécessitent Internet ; la génération
+n’en a plus besoin ensuite. Ne pas ajouter le runtime ou les modèles au dépôt.
+Le modèle 0,8B est un premier essai : la qualité du français, la cohérence et la
+durée demandée doivent être évaluées sur de vraies histoires. Le schéma valide
+la structure, pas la qualité narrative. La synthèse vocale reste une étape séparée.
 
 Le modèle est configurable via `STORYBOOK_MODEL`, au format `fournisseur:modèle`.
-La distribution `pydantic-ai-slim[openai]` inclut les fournisseurs Codex et OpenAI.
+`STORYBOOK_OLLAMA_BASE_URL` permet de changer l’adresse d’un serveur Ollama
+de confiance ; conserver le suffixe `/v1`. La distribution
+`pydantic-ai-slim[openai]` inclut les fournisseurs Ollama, Codex et OpenAI.
 Pour un autre fournisseur, installer l’extra PydanticAI correspondant.
 
 Configuration facultative :
@@ -98,14 +126,26 @@ cp .env.example .env
 uv run uvicorn storybook.api.app:app --reload --env-file .env --port 8000
 ```
 
-Pour une clé API, choisir un modèle `openai:...` disponible sur votre compte et
+Pour utiliser explicitement un fournisseur distant, choisir un modèle `openai:...` et
 renseigner `OPENAI_API_KEY` dans l’environnement ou le `.env` chargé par uvicorn.
 `STORYBOOK_GENERATION_TIMEOUT_SECONDS` vaut 180 par défaut. Le Writer autorise une
 nouvelle tentative en cas de sortie invalide et au plus trois appels au modèle.
 Cette validation de structure ne remplace pas la future relecture narrative.
 
-Sans authentification valide, le serveur et l’interface démarrent quand même ;
-la génération affiche un message d’erreur permettant de réessayer.
+Si Ollama est arrêté, si le modèle manque, ou si la génération dépasse le délai,
+le serveur et l’interface démarrent quand même ; la génération affiche le message
+d’erreur permettant de réessayer. Pour diagnostiquer, vérifier `ollama list` et
+les journaux du serveur. Le délai est configurable pour les machines plus lentes.
+
+Test réel facultatif, après téléchargement du modèle et démarrage d’Ollama :
+
+```bash
+cd backend
+uv run pytest -m integration tests/test_ollama.py -v
+```
+
+Ce test appelle uniquement le modèle local par défaut et vérifie sa sortie typée ;
+il est exclu des tests ordinaires et de la CI. Il ne mesure pas la qualité littéraire.
 
 ## API
 

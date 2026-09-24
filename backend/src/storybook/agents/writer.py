@@ -1,5 +1,8 @@
-from pydantic_ai import Agent
+from pydantic_ai import Agent, NativeOutput
 from pydantic_ai.models import Model
+from pydantic_ai.models.ollama import OllamaModel
+from pydantic_ai.models.openai import OpenAIChatModelSettings
+from pydantic_ai.providers.ollama import OllamaProvider
 
 from storybook.domain.stories import StoryBook
 
@@ -17,10 +20,19 @@ Le synopsis doit être bref. Les scènes contiennent la prose complète, pas un 
 """
 
 
-def create_writer(model: str | Model) -> Agent[None, StoryBook]:
+def create_writer(
+    model: str | Model, *, ollama_base_url: str = "http://127.0.0.1:11434/v1"
+) -> Agent[None, StoryBook]:
+    if isinstance(model, str) and model.startswith("ollama:"):
+        model = OllamaModel(
+            model.removeprefix("ollama:"),
+            provider=OllamaProvider(base_url=ollama_base_url, api_key="ollama"),
+            settings=OpenAIChatModelSettings(openai_reasoning_effort="none"),
+        )
+
     return Agent(
         model,
-        output_type=StoryBook,
+        output_type=NativeOutput(StoryBook) if isinstance(model, OllamaModel) else StoryBook,
         instructions=WRITER_INSTRUCTIONS,
         retries=1,
         defer_model_check=True,
