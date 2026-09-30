@@ -29,7 +29,7 @@ jobs:
         run: python3 scripts/sonar_analysis_mode.py
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           python-version: '3.14'
       - run: uv sync --locked --no-build --project backend
@@ -54,7 +54,7 @@ jobs:
       - name: Verify all coverage reports exist
         run: test -s backend/coverage.xml && test -s frontend/coverage/lcov.info && test -s scripts/coverage.xml
       - name: Analyze sources and coverage
-        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         with:
           skipSignatureVerification: false
           args: -Dsonar.qualitygate.wait=true
