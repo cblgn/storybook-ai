@@ -83,8 +83,8 @@ Do not introduce another backend, frontend, or agent framework without an explic
 - PydanticAI is the application LLM framework.
 - Agents must have focused responsibilities.
 - LLM providers must remain configurable.
-- Prefer the existing Codex-compatible PydanticAI provider for local development
-  when available.
+- Default local development uses Qwen3.5 0.8B through Ollama's OpenAI-compatible
+  API. Keep typed output validation and never silently fall back to a cloud provider.
 - Prompts must not become hidden application logic when deterministic code is more appropriate.
 - Revision/retry loops must be bounded.
 - Do not introduce LangChain, LangGraph, CrewAI, or another orchestration framework unless explicitly required.

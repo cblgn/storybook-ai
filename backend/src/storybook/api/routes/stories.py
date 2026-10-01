@@ -15,7 +15,10 @@ router = APIRouter()
 @lru_cache
 def get_story_service() -> StoryGeneratorService:
     settings = Settings()
-    return StoryGeneratorService(create_writer(settings.model), settings.generation_timeout_seconds)
+    return StoryGeneratorService(
+        create_writer(settings.model, ollama_base_url=settings.ollama_base_url),
+        settings.generation_timeout_seconds,
+    )
 
 
 @router.post("/stories", response_model=StoryBook)
